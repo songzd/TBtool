@@ -1,0 +1,24 @@
+&BandPlot
+    k_conv  = 'direct'
+    nk_path = 30
+    mu_band = 7.0
+    klist(:,1)  = 0.0  0.0  0.0
+    klist(:,2)  = 0.5  0.5  0.0
+    klist(:,3)  = 0.5  0.0  0.0
+    klist(:,4)  = 0.0  0.0  0.0
+    klist(:,5)  = 0.0  0.0  0.5
+    klist(:,6)  = 0.5  0.5  0.5
+    klist(:,7)  = 0.5  0.0  0.5
+    klist(:,8)  = 0.0  0.0  0.5
+/
+&BandIrrep
+    k_conv = 'direct'
+    klist(:,1)  = 0.0  0.0  0.0
+    klist(:,2)  = 0.5  0.5  0.0
+    klist(:,3)  = 0.5  0.0  0.0
+    klist(:,4)  = 0.0  0.0  0.0
+    klist(:,5)  = 0.0  0.0  0.5
+    klist(:,6)  = 0.5  0.5  0.5
+    klist(:,7)  = 0.5  0.0  0.5
+    klist(:,8)  = 0.0  0.0  0.5
+/

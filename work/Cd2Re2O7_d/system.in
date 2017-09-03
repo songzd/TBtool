@@ -1,0 +1,41 @@
+&TightBinding
+    cell_a(:,1) = 0   1   1
+    cell_a(:,2) = 1   0   1
+    cell_a(:,3) = 1   1   0
+    !
+    ! atoms
+    element = 75  75  75  75     ! Re atoms
+    atom_pos_conv = 'direct'
+    atom_pos(:,1) = 0.5 0.5 0.5
+    atom_pos(:,2) = 0.5 0.5 0
+    atom_pos(:,3) = 0.5 0   0.5
+    atom_pos(:,4) = 0   0.5 0.5  
+    !
+    ! local coordinates
+    loc_coord_conv = 'cart'
+    loc_coord_z(:,1) = -2, 1,-2   loc_coord_x(:,1)=  1,-2,-2
+    loc_coord_z(:,2) =  2,-1,-2   loc_coord_x(:,2)= -1, 2,-2
+    loc_coord_z(:,3) =  2, 1, 2   loc_coord_x(:,3)= -1,-2, 2
+    loc_coord_z(:,4) = -2,-1, 2   loc_coord_x(:,4)=  1, 2, 2
+    !
+    ! orbitals
+    obt_list(:,1) = 75  2  0  0 ! z2
+    obt_list(:,2) = 75  2  1  0 ! zx
+    obt_list(:,3) = 75  2 -1  0 ! yz
+    obt_list(:,4) = 75  2  2  0 ! x2-y2
+    obt_list(:,5) = 75  2 -2  0 ! xy
+    !
+    ! Read Hr.dat
+    soc_type = 'nsoc'            ! nsoc, manual, local, global
+    !soc_list(:,1) = 75 2 0.25   ! element, L, soc
+/
+&Symmetry
+    !
+    ! only generators need to be listed
+    time_rev = .true.
+    tau_conv='direct'
+    spgop(1)%str = 'E'          spgop(1)%tau= 0.0 0.0 0.0
+    spgop(2)%str = 'I'          spgop(2)%tau= 0.0 0.0 0.0
+    spgop(3)%str = 'C4z'        spgop(3)%tau= 0.5 0.0 0.0
+    spgop(4)%str = 'C4y'        spgop(4)%tau= 0.0 0.0 0.5
+/
