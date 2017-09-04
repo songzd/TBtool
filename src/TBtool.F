@@ -239,20 +239,20 @@ endsubroutine
 subroutine band_irreps()
     use typcnst,    only: dp, Lmax, lsize, c_pi, sym_op, irep_type
     use my_math,    only: vect_len, dot_prod
-    use band,       only: bnd_slv, bndspc_ini, bndspc_rls
+    use band,       only: bnd_slv, bndspc_ini, bndspc_rls, get_sewing
     use tghtbd,     only: cell_a, cell_b, h0_dat, h0_lat, &
                           h0_lat_num, nobt, nobt2, nspin, natom, atom, nobt
     use pntgrp,     only: find_ltgrp, pgrp_name
-    use symm,       only: spgop, nspgop
+    use symm,       only: spgop, nspgop, atmap, atmapR, rep_at, reps_at
     use reprsnt,    only: init_pntgrp_bst, set_pntgrp_irep
     !
     implicit none
     !
     ! controlling parameters 
-    character(len=30)                   :: k_conv
-    real(kind=dp),dimension(3,lsize)    :: klist
+    character(len=30)   :: k_conv
+    real(dp)            :: deg_tol, klist(3,lsize)
     !
-    namelist  /BandIrrep/    k_conv, klist
+    namelist  /BandIrrep/    k_conv, deg_tol, klist
     !   
     ! Little Group
     type(sym_op),dimension(48)  :: ltgop        ! Little group operations
@@ -265,7 +265,12 @@ subroutine band_irreps()
     type(irep_type), dimension(20) :: irep
     integer :: nirep
     !
-    integer :: ii, jj, kk, ss, xi
+    ! Bloch representations
+    complex(dp)     :: sewing(nobt2,nobt2,48), Brep(nobt2,nobt2,48)
+    integer         :: nxi(20)
+
+    !
+    integer :: ii, jj, deg, kk, ss, xi, gg
     real(kind=dp), dimension(3) :: kvecd, kvecc
     complex(kind=dp), dimension(nobt2,nobt2) :: wave
     real(kind=dp), dimension(nobt2) :: eng
@@ -281,6 +286,7 @@ subroutine band_irreps()
     read(100, BandIrrep)
     close(100)
     !
+    call bndspc_ini(nobt2)
     do kk=1,lsize
         if ( klist(1,kk)==-999 ) exit
         !
@@ -331,7 +337,41 @@ subroutine band_irreps()
                 !write(*,'(8X,"iop =", 16I5)') ltg2spg( ss*ii+1:nltgop )
             endif
         enddo
+        !
+        ! calculate the representations of Bloch states
+        !
+        ! sewing matrice
+        call get_sewing(nobt, nobt2, nspin, nltgop, ltgop, ltg2spg, natom, &
+                        atom, atmap, atmapR, rep_at, reps_at, cell_a, kvecc, sewing)
+        !
+        ! diagonalize the hamiltonian
+        call bnd_slv( kvecc, wave, eng, nobt, nobt2, nspin, h0_lat_num, h0_dat, &
+                      h0_lat, natom, atom, cell_a )
+        !
+        ! Band representation
+        Brep = 0.0_dp
+        do gg=1,nltgop
+            Brep(:,:,gg) = matmul(sewing(:,:,gg),wave)
+            Brep(:,:,gg) = matmul( conjg(transpose(wave)), Brep(:,:,gg) )
+        enddo
+        !
+        ! get irreps
+        ii=1
+        do while (ii<=nobt2)
+            ! find the degenerate bands
+            do jj=ii,nobt2
+                if ( abs(eng(ii)-eng(jj))>deg_tol ) exit
+            enddo
+            ! get irreps
+
+            !
+            write(*,'(8X, I4, " -", I4, 4X, F8.4)') ii, jj-1, eng(ii)
+            !
+            ii=jj
+        enddo
     enddo
+    !
+    call bndspc_rls()
 
 
 endsubroutine band_irreps

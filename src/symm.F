@@ -74,7 +74,18 @@ subroutine get_sym()
     !
 endsubroutine get_sym
 !
-! cstrct_rep() is used to construct atmap, atmapR, rep_at and reps_at
+!***** cstrct_rep() *************************************************
+!
+! Used to construct atmap, atmapR, rep_at and reps_at
+!   g|RaLis> = \sum_j D(i',i,L,a,g) D(s',s,a,g) |R'a'Li's'>
+!
+! Here |Rais> is the i-th orbital with orbital momentum L and spinor s
+!  at the a-th atom lattice R, a'=atmap, R'=atmapR are the rotated atom 
+!  and lattice, respectively.
+! rep_at(i',i,L,a,g) and reps_at(s',s,a,g) is the representation
+!  matrice of real orbitals and spinor orbitals, respectively
+!
+!********************************************************************
 subroutine cstrct_rep(nspin)
     integer,intent(in) :: nspin
     !

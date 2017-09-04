@@ -792,6 +792,7 @@ endif
     !
 endsubroutine set_pntgrp_irep
 !
+!
 subroutine Dmat_rl_op(op,Dmat,L)
     type(sym_op) :: op
     real(kind=dp), dimension(-L:L,-L:L) :: Dmat

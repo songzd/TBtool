@@ -97,6 +97,10 @@ subroutine bnd_slv( kp, wave, eng, nobt, nobt2, nspin, hr_lat_num, hr_dat, hr_la
     !
 endsubroutine
 
+!
+!**** impose_sym() **************************************************
+! Impose symmetry on the real space Hamiltonian
+!********************************************************************
 subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTidx, nop, op, &
                       time_rev, natom, atom, atmap, atmapR, rep_at, reps_at, &
                       cell_a, cell_b)
@@ -289,6 +293,67 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
     !
     !
 endsubroutine impose_sym
+
+!**** get_sewing() **************************************************
+! get the sewing matrix of Bloch bases:
+!   g|k,n> = \sum_m S_mn(k) |gk,m>
+!********************************************************************
+subroutine get_sewing(nobt, nobt2, nspin, nop, op, opidx, natom, atom, atmap, atmapR, &
+                      rep_at, reps_at, cell_a, kp, sewing)
+    !
+    integer,intent(in)          :: nobt, nobt2, nspin
+    integer,intent(in)          :: nop
+    type(sym_op),intent(in)     :: op(nop)
+    integer,intent(in)          :: opidx(48)
+    integer,intent(in)          :: natom
+    type(atom_type),intent(in)  :: atom(natom)
+    integer,intent(in)          :: atmap(natom,48)
+    integer,intent(in)          :: atmapR(3,natom,48)
+    real(dp),intent(in)         :: rep_at(1:2*Lmax+1, 1:2*Lmax+1, 0:Lmax, natom, 48)
+    complex(dp),intent(in)      :: reps_at(1:nspin,1:nspin,natom,48)
+    real(dp),intent(in)         :: cell_a(3,3), kp(3)
+    complex(dp),intent(out)     :: sewing(nobt2,nobt2,nop)
+    !
+    integer   :: aa, bb, gg, gidx, La, ii, jj, ii_, jj_, nn, mm
+    real(dp)  :: dR(3), gkp(3)
+    !
+    if( nobt2/=nobt*nspin ) then
+        write(*,*) 'Error in get_sewing(): wrong nobt2 !!!'
+        stop
+    endif
+    !
+    sewing = 0.0_dp
+    do gg=1,nop
+        gkp = matmul( op(gg)%R, kp )
+        gidx = opidx(gg)
+        !
+        do aa=1,natom
+            dR = cell_a(:,1)*atmapR(1,aa,gidx) + cell_a(:,2)*atmapR(2,aa,gidx) &
+               + cell_a(:,3)*atmapR(3,aa,gidx)
+            bb = atmap(aa,gidx)
+            !
+            do La=0,Lmax
+            do ii=1,atom(aa)%nobtL(La)
+            do nn=1,nspin
+                ii_ = atom(aa)%idx(ii,La) + (nn-1)*nobt
+                !
+                do jj=1,atom(bb)%nobtL(La)
+                do mm=1,nspin
+                    jj_ = atom(bb)%idx(jj,La) + (mm-1)*nobt
+                    sewing(jj_,ii_,gg) = exp( -c_im*dot_prod(gkp,dR) ) &
+                          *rep_at(jj,ii,La,aa,gidx)*reps_at(mm,nn,aa,gidx)
+                enddo
+                enddo
+                !
+            enddo
+            enddo
+            enddo
+            !
+        enddo
+    enddo
+    !
+endsubroutine get_sewing
+
 
 function fun_Efm( nkp, nobt2, eng, nele, smear)
     integer,intent(in)      :: nkp, nobt2
