@@ -100,6 +100,8 @@ subroutine plot_band()
             klist(:,ii) = klist(1,ii)*cell_b(:,1) + klist(2,ii)*cell_b(:,2) &
                         + klist(3,ii)*cell_b(:,3)
         enddo
+    else
+        klist = klist*2*c_pi
     endif
     !
     ! Generate kpt and klen =========================================
@@ -169,20 +171,27 @@ endsubroutine plot_band
 !
 subroutine impose_sym_H0()
     use typcnst,    only: LTmax
+    use my_math,    only: vect_len
     use band,       only: impose_sym
-    use tghtbd,     only: h0_lat_num, nobt, nobt2, nspin, h0_dat, h0_lat, h0_LTidx, &
+    use tghtbd,     only: h0_lat_num, nobt, nobt2, nspin, obt, h0_dat, h0_lat, h0_LTidx, &
                           natom, atom, cell_a, cell_b
     use symm,       only: nspgop, spgop, time_rev, atmap, atmapR, rep_at, reps_at
     !
+    ! controlling parameters
+    real(kind=dp) ::  cut_dist, cut_eng
+    namelist /ImposeSym/    cut_dist, cut_eng
+    !
     integer :: RR,ii,jj
+    real(kind=dp), dimension(3) :: latt
+    !
 !    complex(dp),dimension(nobt2,nobt2,h0_lat_num) :: h0_dat_
 !    real(dp) :: h0max
 !    !
 !    ! The input should be a symmetrized hamiltonian
 !    h0_dat_(:,:,:)=h0_dat(:,:,:)
 !
-    !
     write(*,'(1X,"Impose symmetry on H0 ... ")' )
+    !
     call impose_sym(h0_lat_num, nobt, nobt2, nspin, h0_dat, h0_lat, LTmax, h0_LTidx, nspgop, spgop, &
                     time_rev, natom, atom, atmap, atmapR, rep_at, reps_at, &
                     cell_a, cell_b)
@@ -206,12 +215,18 @@ subroutine impose_sym_H0()
     !
     ! Output ========================================================
     !
+    open(unit=100, file='job.in', status='old')
+    read(100, ImposeSym)
+    close(100)
+    !
     open(100,file='hr.dat.sym',status='replace')
     do RR=1,h0_lat_num
+        latt = cell_a(:,1)*h0_lat(1,RR) + cell_a(:,2)*h0_lat(2,RR) + cell_a(:,3)*h0_lat(3,RR)
         do jj=1,nobt2
         do ii=1,nobt2
 273         format(5I5,2F20.10)
-            if ( abs(h0_dat(ii,jj,RR))>1.0e-7_dp ) then
+            if ( abs(h0_dat(ii,jj,RR))>cut_eng .and. &
+                 vect_len( latt+obt(jj)%pos-obt(ii)%pos )<cut_dist ) then
                 write(100,273) h0_lat(:,RR), ii, jj, h0_dat(ii,jj,RR)
             endif
         enddo
@@ -222,13 +237,15 @@ subroutine impose_sym_H0()
 endsubroutine
 
 subroutine band_irreps()
-    use typcnst,    only: dp, Lmax, lsize, c_pi, sym_op
+    use typcnst,    only: dp, Lmax, lsize, c_pi, sym_op, irep_type
     use my_math,    only: vect_len, dot_prod
     use band,       only: bnd_slv, bndspc_ini, bndspc_rls
     use tghtbd,     only: cell_a, cell_b, h0_dat, h0_lat, &
                           h0_lat_num, nobt, nobt2, nspin, natom, atom, nobt
     use pntgrp,     only: find_ltgrp, pgrp_name
     use symm,       only: spgop, nspgop
+    use reprsnt,    only: init_pntgrp_bst, set_pntgrp_irep
+    !
     implicit none
     !
     ! controlling parameters 
@@ -244,13 +261,19 @@ subroutine band_irreps()
     character(len=30)           :: ltgnm        ! Little group name
     real(dp)                    :: aax(3),cax(3)! Corrdinates for little group
     !
-    integer :: ii, jj, kk, ss
+    ! table of irreps
+    type(irep_type), dimension(20) :: irep
+    integer :: nirep
+    !
+    integer :: ii, jj, kk, ss, xi
+    real(kind=dp), dimension(3) :: kvecd, kvecc
     complex(kind=dp), dimension(nobt2,nobt2) :: wave
     real(kind=dp), dimension(nobt2) :: eng
     !
     ! initialize
     !
     klist(:,:) = -999
+    write(*,'("BandIrreps:")')
     !
     ! Read ==========================================================
     !
@@ -259,23 +282,27 @@ subroutine band_irreps()
     close(100)
     !
     do kk=1,lsize
-        if ( klist(1,kk)==-999 ) then
-            exit
-        endif
+        if ( klist(1,kk)==-999 ) exit
         !
         if ( k_conv(1:1)=='d' ) then
-            klist(:,kk) = klist(1,kk)*cell_b(:,1) + klist(2,kk)*cell_b(:,2) &
-                        + klist(3,kk)*cell_b(:,3)
+            kvecd = klist(:,kk)
+            kvecc = kvecd(1)*cell_b(:,1) + kvecd(2)*cell_b(:,2) + kvecd(3)*cell_b(:,3)
+        else
+            kvecc = klist(:,kk)*2*c_pi
+            kvecd = matmul(transpose(cell_a),kvecc)/(2*c_pi)
         endif
         !
-        ! find the little group
+        ! find the little group (relevant point group)
         !
-        call find_ltgrp(klist(:,kk), nspgop, spgop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
+        call find_ltgrp(kvecc, nspgop, spgop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
         call pgrp_name(nltgop, ltgop, ltgnm, cax, aax)
-        if(dot_prod(cax,klist(:,kk))<0) cax=-cax
+        !if(dot_prod(cax,klist(:,kk))<0) cax=-cax
         !
-        write(*,'(5X, "k = ")')
-        write(*,'(5X,"Little group: ", A9)') trim(ltgnm)
+        write(*,'(4X, "********************************************************&
+                       *********************************")')
+        write(*,'(6X, "k = (", 3F12.6, ")*2pi" )') kvecc/(2*c_pi)
+        write(*,'(6X, "    (", 3F12.6, ") in cell_b" )') kvecd
+        write(*,'(6X,"Little group: ", A9)') trim(ltgnm)
         write(*,'(8X, "with caxis=",3F8.4, " aaxis=",3F8.4)') cax, aax
         ss=10
         do ii=1,nltgop/ss
@@ -285,7 +312,25 @@ subroutine band_irreps()
         if ( nltgop>ss*ii ) then
             write(*,'(8X,"iop =", 16I5)') ltg2spg( ss*ii+1:nltgop )
         endif
-        
+        !
+        ! Set the point group irreps
+        !
+        call init_pntgrp_bst()
+        call set_pntgrp_irep(nltgop,ltgop,ltgnm,nspin,cax,aax,nirep,irep)
+        !
+        write(*,'(6X, "Character table:")')
+        do xi=1,nirep
+            ss=4
+            write(*,'(T9,A5,T1)',advance='no') irep(xi)%name
+            do ii=1,nltgop/ss
+                write(*,'(T15, 4("(", 2F8.4, ") ") )') irep(xi)%cha( (ii-1)*ss+1:min(ii*ss,nltgop) )
+            enddo
+            ii=nltgop/ss
+            if ( nltgop>ss*ii ) then
+                write(*,'(T15, 4("(", 2F8.4, ") ") )') irep(xi)%cha( ii*ss+1:nltgop )
+                !write(*,'(8X,"iop =", 16I5)') ltg2spg( ss*ii+1:nltgop )
+            endif
+        enddo
     enddo
 
 

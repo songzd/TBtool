@@ -11,6 +11,10 @@
     klist(:,7)  = 0.5  0.0  0.5
     klist(:,8)  = 0.0  0.0  0.5
 /
+&ImposeSym
+    cut_eng  = 1.0d-7
+    cut_dist = 20
+/
 &BandIrrep
     k_conv = 'direct'
     klist(:,1)  = 0.0  0.0  0.0

@@ -60,7 +60,9 @@ subroutine bnd_slv( kp, wave, eng, nobt, nobt2, nspin, hr_lat_num, hr_dat, hr_la
         !
         do aa=1,natom
         do bb=1,natom
-            kdr = dot_prod( latt + atom(bb)%pos - atom(aa)%pos, kp )
+            ! Here we adopt the periodic gauge
+            !kdr = dot_prod( latt + atom(bb)%pos - atom(aa)%pos, kp )
+            kdr = dot_prod( latt, kp ) 
             do La=0,Lmax
             do Lb=0,Lmax
                 do ii=1, atom(aa)%nobtL(La)

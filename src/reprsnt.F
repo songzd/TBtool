@@ -1,4 +1,3 @@
-!
 module reprsnt
 !
 use typcnst,    only: dp, c_pi, c_im, maxdim, maxbcp, maxrep, irep_type, sym_op, &
@@ -837,11 +836,11 @@ endsubroutine Dmat_rl
 !********************************************************************
 subroutine dmat_cmplx(alph,beta,gamm,dmat,L)
     real(kind=dp) :: alph, beta, gamm
-    complex(kind=dp), dimension(-L:L,-L:L) :: dmat
+    complex(kind=dp), dimension(-abs(L):abs(L),-abs(L):abs(L)) :: dmat
     integer :: L
     !
     integer :: nn, mm
-    real(kind=dp),  dimension(-L:L,-L:L) :: dmat_
+    real(kind=dp),  dimension(-abs(L):abs(L),-abs(L):abs(L)) :: dmat_
     !
     call dmat_lt(beta,dmat_,L)
     if (L>=0) then
@@ -868,7 +867,7 @@ endsubroutine
 !********************************************************************
 subroutine dmat_lt(beta, dmat, L)
     real(kind=dp) :: beta, s,c 
-    real(kind=dp), dimension(-L:L,-L:L) :: dmat
+    real(kind=dp), dimension(-abs(L):abs(L),-abs(L):abs(L)) :: dmat
     integer     :: L, ii, jj
     !   
     real(kind=dp) :: c6s0, c5s1, c4s2, c3s3, c2s4, c1s5, c0s6, &

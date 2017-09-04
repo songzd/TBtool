@@ -190,9 +190,9 @@ subroutine get_obt()
     write(*, '( 5X, "  a1=", 3F10.5  )') cell_a(:,1)
     write(*, '( 5X, "  a2=", 3F10.5  )') cell_a(:,2)
     write(*, '( 5X, "  a3=", 3F10.5  )') cell_a(:,3)
-    write(*, '( 5X, "  b1=", 3F10.5, " pi")') cell_b(:,1)/c_pi
-    write(*, '( 5X, "  b2=", 3F10.5, " pi")') cell_b(:,2)/c_pi
-    write(*, '( 5X, "  b3=", 3F10.5, " pi")') cell_b(:,3)/c_pi
+    write(*, '( 5X, "  b1=", 3F10.5, " pi")') cell_b(:,1)/(2*c_pi)
+    write(*, '( 5X, "  b2=", 3F10.5, " pi")') cell_b(:,2)/(2*c_pi)
+    write(*, '( 5X, "  b3=", 3F10.5, " pi")') cell_b(:,3)/(2*c_pi)
     !
     write(*, '( 1X, "Atoms:" )')
     write(*, '( 5X, " Atom", " Elmt", "  Position (cart)", 19X, "Euler Angle"  )')
