@@ -266,11 +266,11 @@ subroutine band_irreps()
     integer :: nirep
     !
     ! Bloch representations
-    complex(dp)     :: sewing(nobt2,nobt2,48), Brep(nobt2,nobt2,48)
-    integer         :: nxi(20)
+    complex(dp)     :: sewing(nobt2,nobt2,48), Brep(nobt2,48), nxitmp
+    integer         :: nxi, checkdim
 
     !
-    integer :: ii, jj, deg, kk, ss, xi, gg
+    integer :: ii, jj, jj_, kk, ss, xi, gg
     real(kind=dp), dimension(3) :: kvecd, kvecc
     complex(kind=dp), dimension(nobt2,nobt2) :: wave
     real(kind=dp), dimension(nobt2) :: eng
@@ -351,23 +351,53 @@ subroutine band_irreps()
         ! Band representation
         Brep = 0.0_dp
         do gg=1,nltgop
-            Brep(:,:,gg) = matmul(sewing(:,:,gg),wave)
-            Brep(:,:,gg) = matmul( conjg(transpose(wave)), Brep(:,:,gg) )
+            do ii=1,nobt2
+                do jj =1,nobt2
+                do jj_=1,nobt2
+                    Brep(ii,gg) = Brep(ii,gg) + conjg(wave(jj_,ii))*sewing(jj_,jj,gg)*wave(jj,ii)
+                enddo
+                enddo
+            enddo
         enddo
         !
         ! get irreps
+        write(*,*) ' '
+        write(*,'(8X, "Bands", 9X, "Energy", 10X, "Irreps")')
         ii=1
         do while (ii<=nobt2)
+            !
             ! find the degenerate bands
             do jj=ii,nobt2
                 if ( abs(eng(ii)-eng(jj))>deg_tol ) exit
             enddo
+            write(*,'(8X, I4, " -", I4, 4X, F9.4, "  :")',advance='no') ii, jj-1, eng(ii)
+            !
             ! get irreps
-
+            checkdim = 0
+            do xi=1,nirep
+                nxitmp = 0.0_dp
+                do gg=1,nltgop
+                    nxitmp = nxitmp + conjg(sum(Brep(ii:jj-1,gg)))*irep(xi)%cha(gg)
+                enddo
+                nxi = nint(real(nxitmp)/nltgop)
+                checkdim = checkdim + nxi*irep(xi)%D
+                !
+                if (nxi>0) then
+                    write(*,'(2X, I4, "*", A5)',advance='no') nxi,  irep(xi)%name
+                endif
+            enddo
+            write(*,*) ' '
             !
-            write(*,'(8X, I4, " -", I4, 4X, F8.4)') ii, jj-1, eng(ii)
+            ! check irreps dimension 
+            if (checkdim/=jj-ii) then
+                write(*,*) 'Error in band_irreps(): the dimensions of degenerate bands and &
+                            irreps do not match !!!'
+                stop
+            endif
             !
+            ! next band
             ii=jj
+            !
         enddo
     enddo
     !
