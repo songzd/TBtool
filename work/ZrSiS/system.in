@@ -1,0 +1,57 @@
+&TightBinding
+    cell_a(:,1) =  3.5496074     0.0000000     0.0000000
+    cell_a(:,2) =  0.0000000     3.5496074     0.0000000
+    cell_a(:,3) =  0.0000000     0.0000000     8.1636955
+    !
+    ! atoms
+    element = 50 50 51 51  90 90 52 52         !Zr Zr Si Si Si' Si' S S
+    atom_pos_conv = 'direct'
+    atom_pos(:,1) =   0.50 -0.0000000000000000  0.7317361549757430 
+    atom_pos(:,2) =   0.00  0.5000000000000000  0.2682638450242570
+    atom_pos(:,3) =   0.50  0.5000000000000000 -0.0000000000000000
+    atom_pos(:,4) =  -0.00 -0.0000000000000000 -0.0000000000000000
+    atom_pos(:,5) =   0.50  0.5000000000000000 -0.0000000000000000
+    atom_pos(:,6) =  -0.00 -0.0000000000000000 -0.0000000000000000
+    atom_pos(:,7) =   0.00  0.5000000000000000  0.6223761531972395
+    atom_pos(:,8) =   0.50  0.0000000000000000  0.3776238468027606
+    !
+    ! local coordinates
+    loc_coord_conv = 'cart'
+    loc_coord_z(:,1) =  0, 0, 1   loc_coord_x(:,1)=  1, 0, 0   ! 0 0 1, 1 0 0
+    loc_coord_z(:,2) =  0, 0, 1   loc_coord_x(:,2)=  1, 0, 0
+    loc_coord_z(:,3) =  0, 0, 1   loc_coord_x(:,3)=  1, 0, 0
+    loc_coord_z(:,4) =  0, 0, 1   loc_coord_x(:,4)=  1, 0, 0
+    loc_coord_z(:,5) =  0, 0, 1   loc_coord_x(:,5)=  1, 0, 0
+    loc_coord_z(:,6) =  0, 0, 1   loc_coord_x(:,6)=  1, 0, 0
+    loc_coord_z(:,7) =  0, 0, 1   loc_coord_x(:,7)=  1, 0, 0
+    loc_coord_z(:,8) =  0, 0, 1   loc_coord_x(:,8)=  1, 0, 0
+    !
+    ! orbitals
+    obt_list(:,1) = 50  2  0  0 ! dz2
+    obt_list(:,2) = 50  2  1  0 ! dxz
+    obt_list(:,3) = 50  2 -1  0 ! dyz
+    obt_list(:,4) = 50  2  2  0 ! dx2-y2
+    obt_list(:,5) = 50  2 -2  0 ! dxy
+    obt_list(:,6) = 51  1  0  0 ! pz
+    obt_list(:,7) = 51  1  1  0 ! px
+    obt_list(:,8) = 51  1 -1  0 ! py
+    obt_list(:,9) = 90  0  0  0 ! s
+    obt_list(:,10) = 52  1  0  0 ! pz
+    obt_list(:,11) = 52  1  1  0 ! px
+    obt_list(:,12) = 52  1 -1  0 ! py
+    !
+    ! Read Hr.dat
+    !dist_cut = 3                ! cutoff for hr
+    soc_type = 'nsoc'            ! nsoc, manual, local, global
+    !soc_list(:,1) = 75 2 0.25   ! element, L, soc
+/
+&Symmetry
+    !
+    ! only generators need to be listed
+    time_rev = .false.
+    tau_conv='direct'
+    spgop(1)%str = 'E'          spgop(1)%tau= 0.0 0.0 0.0
+    spgop(2)%str = 'I'          spgop(2)%tau= 0.5 0.5 0.0
+    spgop(3)%str = 'C4z'        spgop(3)%tau= 0.5 0.5 0.0
+    spgop(4)%str = 'C2y'        spgop(4)%tau= 0.5 0.5 0.0
+/

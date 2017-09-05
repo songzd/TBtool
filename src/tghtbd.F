@@ -135,6 +135,7 @@ subroutine get_obt()
                 atom(ii)%nobtL(ll)  = nn
                 atom(ii)%m(nn,ll)   = mm
                 atom(ii)%idx(nn,ll) = nobt
+                !
                 if ( obt_list(4,jj)==1 ) then
                     atom(ii)%cr(nn,ll) = .true.
                 else
@@ -205,26 +206,19 @@ subroutine get_obt()
     !
     call init_obtsym()
     !
-#if 0
+#if 1
+    do ss=1,nspin
     do ii=1, natom
     do ll=0, Lmax
     if (atom(ii)%nobtL(ll)>0) then
-        write(*,176) ( atom(ii)%idx(jj,ll), ii, ll, atom(ii)%m(jj,ll), &
-                       trim(obtsym(atom(ii)%m(jj,ll), ll)), 1, &
+        write(*,175) ( atom(ii)%idx(jj,ll)+(ss-1)*nobt, ii, ll, atom(ii)%m(jj,ll), &
+                       trim(obtsym(atom(ii)%m(jj,ll), ll)), ss, &
                        jj=1,atom(ii)%nobtL(ll) )
     endif
     enddo
     enddo
-    !
-    do ii=1, natom
-    do ll=0,Lmax
-    if (atom(ii)%nobtL(ll)>0) then
-        write(*,176) ( atom(ii)%idx(jj,ll)+nobt, ii, ll, atom(ii)%m(jj,ll), &
-                       trim(obtsym(atom(ii)%m(jj,ll), ll)), 2, &
-                       jj=1,atom(ii)%nobtL(ll) )
-    endif
     enddo
-    enddo
+175     format(5X,4I5, A10, I5) 
     !
 #else
     do ii=1,nobt2

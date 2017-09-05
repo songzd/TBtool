@@ -66,7 +66,7 @@ subroutine bnd_slv( kp, wave, eng, nobt, nobt2, nspin, hr_lat_num, hr_dat, hr_la
             do La=0,Lmax
             do Lb=0,Lmax
                 do ii=1, atom(aa)%nobtL(La)
-                do jj=1, atom(aa)%nobtL(Lb)
+                do jj=1, atom(bb)%nobtL(Lb)
                     do nn=0,nspin-1
                     do mm=0,nspin-1
                         ii_ = atom(aa)%idx(ii,La) + nn*nobt
@@ -129,6 +129,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
     ! the symmetrized hr
     complex(kind=dp), dimension(nobt2,nobt2,hr_lat_num) :: hr_sym
     real(kind=dp), dimension(nspin,nspin) :: Ut 
+    logical :: badlat(lsize,lsize,5000)
     !
     ! g0R  
     real(kind=dp), dimension(3) :: g0R_
@@ -139,25 +140,45 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
         stop
     endif
     !
+    ! symmetrize the lattice
+    !
+    badlat = .false.
+    do RR=1,hr_lat_num   ! RR loop
+    do aa=1,natom        ! atom loop
+    do bb=1,natom
+        do gg=1,nop      ! gg loop
+            g0R_ = hr_lat(1,RR)*cell_a(:,1) + hr_lat(2,RR)*cell_a(:,2) + &
+                   hr_lat(3,RR)*cell_a(:,3)
+            g0R_ = matmul( op(gg)%R, g0R_ )
+            call TonA( g0R_, g0R, aapos, cell_a, cell_b )
+            !
+            ! find RRp
+            RRp = LTidx( g0R(1)+atmapR(1,bb,gg)-atmapR(1,aa,gg), &
+                         g0R(2)+atmapR(2,bb,gg)-atmapR(2,aa,gg), &
+                         g0R(3)+atmapR(3,bb,gg)-atmapR(3,aa,gg) )
+            !
+            if (RRp==0) badlat(aa,bb,RR) = .true.
+        enddo
+    enddo
+    enddo
+    enddo
+    !
     ! Hermitian =====================================================
     !
-    hr_sym(:,:,:) = 0.0_dp
-    do RR=1,hr_lat_num
+    !hr_sym(:,:,:) = 0.0_dp
+    !do RR=1,hr_lat_num
         !
-        RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR) )
-        if (RRp==0) then
-            !print*, -hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR)
-            cycle 
-        endif
-        !
-        do ii=1,nobt2
-        do jj=1,nobt2
-            hr_sym(ii,jj,RR) = conjg(hr_dat(jj,ii,RRp))
-        enddo
-        enddo
-        !
-    enddo
-    hr_dat(:,:,:) = 0.5_dp*( hr_dat(:,:,:)+hr_sym(:,:,:) )
+    !    RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR) )
+    !    if (RRp==0) cycle 
+    !    !
+    !    do ii=1,nobt2
+    !    do jj=1,nobt2
+    !        hr_sym(ii,jj,RR) = conjg(hr_dat(jj,ii,RRp))
+    !    enddo
+    !    enddo
+    !    !
+    !enddo
+    !hr_dat(:,:,:) = 0.5_dp*( hr_dat(:,:,:)+hr_sym(:,:,:) )
     !
     ! Point Group====================================================
     !
@@ -176,16 +197,15 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
             RRp = LTidx( g0R(1)+atmapR(1,bb,gg)-atmapR(1,aa,gg), &
                          g0R(2)+atmapR(2,bb,gg)-atmapR(2,aa,gg), &
                          g0R(3)+atmapR(3,bb,gg)-atmapR(3,aa,gg) )
-            !if (RRp==0) then
-                !print*, g0R(1)+atmapR(1,bb,gg)-atmapR(1,aa,gg), &
-                !        g0R(2)+atmapR(2,bb,gg)-atmapR(2,aa,gg), &
-                !        g0R(3)+atmapR(3,bb,gg)-atmapR(3,aa,gg)
-            !    cycle
-            !endif
             !
             ! matrix element
             aap = atmap(aa,gg)
             bbp = atmap(bb,gg)
+            !
+            ! remove bad lattice
+            if (badlat(aa,bb,RR )) cycle   ! <=> RRp=0
+            if (badlat(aap,bbp,RRp)) cycle
+            !
             do La=0,Lmax
             do ii=1,atom(aa)%nobtL(La)
             do nn=1,nspin
@@ -194,12 +214,6 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
             do jj=1,atom(bb)%nobtL(Lb)
             do mm=1,nspin
                 jj_ = atom(bb)%idx(jj,Lb) + (mm-1)*nobt
-                !
-                ! if g*R is out of the Hamiltonian lattice, H(R) should be zero
-                if (RRp==0) then
-                    hr_sym(ii_,jj_,RR) = 0.0_dp
-                    cycle
-                endif
                 !
                 do iip=1,atom(aap)%nobtL(La)
                 do nnp=1,nspin
@@ -249,10 +263,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
         do RR=1,hr_lat_num
             !
             RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR))
-            if(RRp==0) then
-                print*, -hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR)
-                cycle 
-            endif
+            if(RRp==0) cycle
             !
             do aa=1,natom
             do La=0,Lmax

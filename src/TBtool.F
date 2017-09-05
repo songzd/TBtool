@@ -225,7 +225,7 @@ subroutine impose_sym_H0()
         do jj=1,nobt2
         do ii=1,nobt2
 273         format(5I5,2F20.10)
-            if ( abs(h0_dat(ii,jj,RR))>cut_eng .and. &
+            if ( abs(h0_dat(ii,jj,RR))>=cut_eng .and. &
                  vect_len( latt+obt(jj)%pos-obt(ii)%pos )<cut_dist ) then
                 write(100,273) h0_lat(:,RR), ii, jj, h0_dat(ii,jj,RR)
             endif
@@ -278,7 +278,7 @@ subroutine band_irreps()
     ! initialize
     !
     klist(:,:) = -999
-    write(*,'("BandIrreps:")')
+    write(*,*) 'BandIrreps:'
     !
     ! Read ==========================================================
     !
@@ -402,8 +402,7 @@ subroutine band_irreps()
     enddo
     !
     call bndspc_rls()
-
-
+    !
 endsubroutine band_irreps
 
 endprogram TBtool

@@ -146,10 +146,12 @@ subroutine cstrct_rep(nspin)
     !
     ! Atoms mapping and rep_at ===============
     ! 
-    open(unit=100,file='out.rotatm',status='replace')
+    !open(unit=100,file='out.rotatm',status='replace')
+    !write(100,'(1X,"Rotation on atoms:")')
+    !write(100,'(5X,"  iop", "    a", "   ap", "     Rp")')
     !
-    write(100,'(1X,"Rotation on atoms:")')
-    write(100,'(5X,"  iop", "    a", "   ap", "     Rp")')
+    open(unit=101,file='out.rep_at',status='replace')
+    open(unit=102,file='out.reps_at',status='replace')
     !
     allocate(atmap(natom,nspgop) )
     allocate(atmapR(3,natom,nspgop))
@@ -186,7 +188,7 @@ subroutine cstrct_rep(nspin)
             enddo
             atmap(aa,gg)=bb
             !
-            write(100,'(5X,7I5)') gg, aa, atmap(aa,gg), atmapR(:,aa,gg)
+            !write(100,'(5X,7I5)') gg, aa, atmap(aa,gg), atmapR(:,aa,gg)
             !
         enddo
         !
@@ -194,23 +196,47 @@ subroutine cstrct_rep(nspin)
         do aa=1, natom
         do La=0, Lmax
             nn = atom(aa)%nobtL(La)
-        if (nn>0) then
             aap = atmap(aa,gg)
-            !
-            dmat(-La:La,-La:La) = &
-                matmul(dmat_op(-La:La,-La:La,La),dmat_at(-La:La,-La:La,La,aa))
-            dmat(-La:La,-La:La) = & 
-                matmul(transpose(dmat_at(-La:La,-La:La,La,aap)), dmat(-La:La,-La:La))
-            do ii=1,nn
-            do jj=1,nn
-                rep_at(ii,jj,La,aa,gg) = dmat(atom(aa)%M(ii,La), atom(aa)%M(jj,La))
-            enddo
-            enddo
-            !
-            if ( .not. othmat( rep_at(1:nn,1:nn,La,aa,gg), nn ) ) then
-                write(*,*) 'Error in cstrct_rep(): orbitals are not compatible with symmetry !!!'
-                stop
+            if (nn>0) then
+                !
+                dmat(-La:La,-La:La) = &
+                    matmul(dmat_op(-La:La,-La:La,La),dmat_at(-La:La,-La:La,La,aa))
+                dmat(-La:La,-La:La) = & 
+                    matmul(transpose(dmat_at(-La:La,-La:La,La,aap)), dmat(-La:La,-La:La))
+                do ii=1,nn
+                do jj=1,nn
+                    rep_at(ii,jj,La,aa,gg) = dmat(atom(aa)%M(ii,La), atom(aa)%M(jj,La))
+                enddo
+                enddo
+                !
+                if ( .not. othmat( rep_at(1:nn,1:nn,La,aa,gg), nn ) ) then
+                    write(*,*) 'Error in cstrct_rep(): orbitals are not compatible with symmetry !!!'
+                    stop
+                endif
+                !
+                ! write to out.rep_at 
+                write(101, '("iop=", I4, "  aa=", I4, "  aap=", I4, "  Rp=",3I4, "  ********************")') &
+                    gg, aa, aap, atmapR(:,aa,gg)
+                write(101, '(4X, "Orbitals on aa ", I4, "- ",I4, " : " )', advance='no') &
+                    atom(aa)%idx(1,La), atom(aa)%idx(nn,La)
+                do ii=1,nn
+                    write(101,'( "(", I1, I2, ") ") ',advance='no') La, atom(aa)%M(ii,La)
+                enddo
+                write(101,*) ' '
+                !
+                write(101, '(4X, "Orbitals on aap", I4, "- ",I4, " : " )', advance='no') &
+                    atom(aap)%idx(1,La), atom(aap)%idx(nn,La)
+                do ii=1,nn
+                    write(101,'( "(", I1, I2, ") ") ',advance='no') La, atom(aap)%M(ii,La)
+                enddo
+                write(101,*) ' '
+                !
+                do ii=1,nn
+                    write(101,'(4X,  5F10.5 )') rep_at(ii,1:nn,La,aa,gg)
+                enddo
             endif
+            !
+            ! reps_at
             !
             dmats(:,:) = matmul(dmats_op(:,:), dmats_at(:,:,aa))
             reps_at(:,:,aa,gg)=matmul(transpose(conjg(dmats_at(:,:,aap))), dmats)
@@ -220,26 +246,19 @@ subroutine cstrct_rep(nspin)
                 stop
             endif
             !
-            !print*, aa, gg
-            !write(*,'(3F12.6)') rep_at(1,1:3,2,aa,gg)
-            !write(*,'(3F12.6)') rep_at(2,1:3,2,aa,gg)
-            !write(*,'(3F12.6)') rep_at(3,1:3,2,aa,gg)
-            !write(*,'(4F12.6)') reps_at(1,1:2,aa,gg)
-            !write(*,'(4F12.6)') reps_at(2,1:2,aa,gg)
+            write(102, '("iop=", I4, "  aa=", I4, "  aap=", I4, "  Rp=",3I4, "  ********************")') &
+                gg, aa, aap, atmapR(:,aa,gg)
+            do ii=1,nspin
+                write(102,'(4X,  2("(",2F10.5,")")   )') reps_at(ii,1:nspin,aa,gg)
+            enddo
             !
-        endif
         enddo
         enddo
     enddo
     !
-    close(100)
-    !
-#if 0 
-    ! check rep_at and reps_at
-    write(*,'(5F10.5)') ( rep_at(ii,1:5,2,1,3), ii=1,5)
-    write(*,*)' '
-    write(*,'(4F10.5)') ( reps_at(ii,1:2,1,3), ii=1,2)
-#endif
+    !close(100)
+    close(101)
+    close(102)
     !
 endsubroutine cstrct_rep
 
