@@ -273,7 +273,7 @@ subroutine pgrp_name( nop, op, gname, cx, ax)
     case('C1', 'Ci')
         cx=(/0.0, 0.0, 1.0/)
         ax=(/1.0, 0.0, 0.0/)
-    case('T', 'Th', 'Td')
+    case('T', 'Th', 'Td', 'D2h')
         ! If the point group is T, Th or Td
         !   cx is the 2-fold axis closest to (001)
         !   ax is the 2-fold axis closest to (100)
@@ -302,30 +302,30 @@ subroutine pgrp_name( nop, op, gname, cx, ax)
         enddo
         ax=op(aa)%axis*sign( 1.0_dp, op(aa)%axis(1) )
         !
-    case('D2h')
-        cc=0
-        do ii=1,nop
-            if( op(ii)%rotm==2 .and. op(ii)%det==-1) then
-                cc=ii
-                exit
-            endif
-        enddo
-        cx = op(cc)%axis*sign(1.0_dp,op(cc)%axis(3))
-        !
-        aa=0
-        do ii=1,nop
-            if ( op(ii)%rotm==2 .and. &
-                 abs(dot_prod(op(ii)%axis,cx))<1.0e-3_dp ) then
-                if (aa==0) then
-                    aa=ii
-                elseif ( abs(op(ii)%axis(1))>abs(op(aa)%axis(1)) ) then
-                    aa=ii
-                endif
-                !
-            endif
-        enddo
-        ax=op(aa)%axis*sign(1.0_dp,op(aa)%axis(1))
-        !
+    !case('D2h')
+    !    cc=0
+    !    do ii=1,nop
+    !        if( op(ii)%rotm==2 .and. op(ii)%det==-1) then
+    !            cc=ii
+    !            exit
+    !        endif
+    !    enddo
+    !    cx = op(cc)%axis*sign(1.0_dp,op(cc)%axis(3))
+    !    !
+    !    aa=0
+    !    do ii=1,nop
+    !        if ( op(ii)%rotm==2 .and. &
+    !             abs(dot_prod(op(ii)%axis,cx))<1.0e-3_dp ) then
+    !            if (aa==0) then
+    !                aa=ii
+    !            elseif ( abs(op(ii)%axis(1))>abs(op(aa)%axis(1)) ) then
+    !                aa=ii
+    !            endif
+    !            !
+    !        endif
+    !    enddo
+    !    ax=op(aa)%axis*sign(1.0_dp,op(aa)%axis(1))
+    !    !
     case('D2d')
         aa=0
         bb=0
@@ -347,6 +347,7 @@ subroutine pgrp_name( nop, op, gname, cx, ax)
         !
         ax=op(aa)%axis*sign(1.0_dp,op(aa)%axis(1))
         cx=x_prod(ax,op(bb)%axis)
+        cx=cx*sign( 1.0_dp, cx(3) )
         !
     case default
         !------------------------------------------------------------

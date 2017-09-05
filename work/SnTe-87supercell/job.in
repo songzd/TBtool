@@ -25,20 +25,20 @@
     klist(:,5)  = 0.5  0.5  0.5
     klist(:,6)  = 0.5  0.0  0.5
 /
-&SilceWannier
+&SliceWannier
     k_conv  = 'direct'
     kz_sls = 0
     bstart=1
     bend  =12
     !
     ! pseudo-atoms
-    pat_kind = 1  1
-    pat_pos_conv = 'direct'
-    pat_pos(:,1) = 0    0    0
-    pat_pos(:,2) = 0.5  0.5  0
+    sat_kind = 1  1
+    sat_pos_conv = 'direct'
+    sat_pos(:,1) = 0    0    0
+    sat_pos(:,2) = 0.5  0.5  0
     !
     ! slice-wanniers
-    wan_list(:,1) = 1  'D4h'  E12u
-    wan_list(:,2) = 1  'D4h'  E12u
-    wan_list(:,3) = 1  'D4h'  E32u
+    swan_list(:,1) = 1  D4h  E12u
+    swan_list(:,2) = 1  D4h  E12u
+    swan_list(:,3) = 1  D4h  E32u
 /

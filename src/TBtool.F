@@ -1,14 +1,14 @@
 program TBtool
     !
-    use typcnst, only: DP, i12
-    use tghtbd,  only: get_tb, nspin
-    use symm,    only: get_sym, cstrct_rep
-    !use reprsnt, only: dmat_check
+    use typcnst,    only: DP, i12
+    use tghtbd,     only: get_obt, get_hr, nspin
+    use symm,       only: get_sym, cstrct_rep
+    use slicewann,  only: get_swan
     !
     implicit none
     !
-    character(len=30)   :: task
-    integer             :: lent, stat
+    character(len=30)       :: task
+    integer                 :: lent, stat
     real(kind=dp),parameter :: c_pi=3.141592653589793_dp
     !
     ! Get task ======================================================
@@ -20,7 +20,8 @@ program TBtool
     endif
     !
     ! Get TB Model
-    call get_tb()
+    call get_obt()
+    call get_hr()
     !
     ! Get symmtry
     call get_sym()
@@ -36,6 +37,9 @@ program TBtool
     case('ir')
         ! Band irreps
         call band_irreps()
+    case('sl')
+        ! slice-wannier
+        call get_swan()
     case default
         write(*,'(1X, "Nothing to be done")')
     endselect

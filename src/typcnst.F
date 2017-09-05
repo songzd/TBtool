@@ -92,7 +92,7 @@ type :: pat_type
     character(len=30)    :: SSG
     real(dp)             :: alph, beta, gamm
     integer              :: nirep
-    integer              :: widx(maxdim,maxrep_pat)
+    integer              :: idx1(maxrep_pat), idx2(maxrep_pat)
 endtype
 !
 type :: wan_type

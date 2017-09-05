@@ -8,7 +8,7 @@ use reprsnt,    only : dmat_spin
 implicit none
 !
 private 
-public :: get_tb, cell_a, cell_b, h0_dat, h0_lat, h0_lat_num, & 
+public :: get_obt, get_hr, cell_a, cell_b, h0_dat, h0_lat, h0_lat_num, & 
           nobt, nobt2, nspin, natom, atom,  &
           h0_LTidx, obt
 !
@@ -50,11 +50,6 @@ complex(kind=dp), dimension(-Lmax:Lmax,1:2,-Lmax:Lmax,1:2, 0:Lmax)   ::  socmat
 integer, dimension(-LTmax:LTmax,-LTmax:LTmax,-LTmax:LTmax) :: h0_LTidx
 contains
 !
-!
-subroutine get_tb()
-    call get_obt()
-    call get_hr()
-endsubroutine
 !
 subroutine get_obt()
     integer    :: ii, jj, ll, mm, nn, ss
@@ -225,8 +220,8 @@ subroutine get_obt()
         write(*,176) ii, obt(ii)%at, obt(ii)%L, obt(ii)%M, &
                      trim(obtsym(obt(ii)%M,obt(ii)%L)), obt(ii)%S, obt(ii)%cr
     enddo
-#endif
 176     format(5X,4I5, A10, I5, L5) 
+#endif
     !
     !
 endsubroutine get_obt
