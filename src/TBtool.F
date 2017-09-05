@@ -242,7 +242,7 @@ subroutine band_irreps()
     use band,       only: bnd_slv, bndspc_ini, bndspc_rls, get_sewing
     use tghtbd,     only: cell_a, cell_b, h0_dat, h0_lat, &
                           h0_lat_num, nobt, nobt2, nspin, natom, atom, nobt
-    use pntgrp,     only: find_ltgrp, pgrp_name
+    use pntgrp,     only: find_ltgrp_k, pgrp_name
     use symm,       only: spgop, nspgop, atmap, atmapR, rep_at, reps_at
     use reprsnt,    only: init_pntgrp_bst, set_pntgrp_irep
     !
@@ -300,7 +300,7 @@ subroutine band_irreps()
         !
         ! find the little group (relevant point group)
         !
-        call find_ltgrp(kvecc, nspgop, spgop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
+        call find_ltgrp_k(kvecc, nspgop, spgop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
         call pgrp_name(nltgop, ltgop, ltgnm, cax, aax)
         !if(dot_prod(cax,klist(:,kk))<0) cax=-cax
         !

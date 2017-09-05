@@ -59,76 +59,76 @@ endsubroutine
 subroutine get_obt()
     integer    :: ii, jj, ll, mm, nn, ss
     real(kind=dp)       :: vol
-    real(dp),dimension(3) :: vtmp
-    integer, dimension(3) :: ltmp
-    !
-    ! read structure =================================================
-    !
-    ! initialize
-    element(:)=0
-    obt_list(:,:)=0
-    soc_list(:,:)=0.0_dp
-    !
-    open(unit=100, file='system.in', status='old')
-    read(100, TightBinding) 
-    close(100)
-    !
-    ! Reciprocal Lattice
-    vol = mix_prod(cell_a(:,1),cell_a(:,2),cell_a(:,3))
-    cell_b(:,1) = x_prod(cell_a(:,2),cell_a(:,3))/vol *2*c_pi
-    cell_b(:,2) = x_prod(cell_a(:,3),cell_a(:,1))/vol *2*c_pi
-    cell_b(:,3) = x_prod(cell_a(:,1),cell_a(:,2))/vol *2*c_pi
-    !
-    ! count atoms
-    natom=0
-    do ii=1,lsize
-        if (element(ii)==0) exit
-        natom = natom + 1
-        atom(natom)%elmt=element(ii)
-    enddo
-    !
-    ! atom positions
-    if (atom_pos_conv(1:1)=='d') then
-        do ii=1,natom
-            atom_pos(:,ii) = atom_pos(1,ii)*cell_a(:,1) + atom_pos(2,ii)*cell_a(:,2) &
-                                                        + atom_pos(3,ii)*cell_a(:,3)
-        enddo
-    endif
-    !
-    do ii=1,natom
-        call TonA( atom_pos(:,ii), ltmp, vtmp, cell_a, cell_b )
-        if (ltmp(1)/=0 .or. ltmp(2)/=0 .or. ltmp(3)/=0) then
-            write(*,*) 'Error in get_obt(): atom is not in 0 0 0 lattice !!!'
-            stop
-        endif
-        atom(ii)%pos = atom_pos(:,ii)
-    enddo
-    !
-    ! local coordinates
-    if (loc_coord_conv(1:1)=='d') then
-        do ii=1,natom
-            loc_coord_z(:,ii) =  loc_coord_z(1,ii)*cell_a(:,1) + loc_coord_z(2,ii)*cell_a(:,2) &
-                                                               + loc_coord_z(3,ii)*cell_a(:,3)
-            loc_coord_x(:,ii) =  loc_coord_x(1,ii)*cell_a(:,1) + loc_coord_x(2,ii)*cell_a(:,2) &
-                                                               + loc_coord_x(3,ii)*cell_a(:,3)
-        enddo
-    endif
-    do ii=1,natom
-        call euler_angle(loc_coord_z(:,ii), loc_coord_x(:,ii), &
-                     atom(ii)%alph, atom(ii)%beta, atom(ii)%gamm)
-    enddo
-    !
-    ! Atoms
-    nobt=0
-    do ii=1,natom       ! atoms
+        real(dp),dimension(3) :: vtmp
+        integer, dimension(3) :: ltmp
         !
-        atom(ii)%nobtL=0
-        do jj=1,lsize
-            if ( obt_list(1,jj) == 0 ) exit
-            if ( obt_list(1,jj) == atom(ii)%elmt ) then
-                nobt = nobt + 1
-                !
-                ll = obt_list(2,jj)
+        ! read structure =================================================
+        !
+        ! initialize
+        element(:)=0
+        obt_list(:,:)=0
+        soc_list(:,:)=0.0_dp
+        !
+        open(unit=100, file='system.in', status='old')
+        read(100, TightBinding) 
+        close(100)
+        !
+        ! Reciprocal Lattice
+        vol = mix_prod(cell_a(:,1),cell_a(:,2),cell_a(:,3))
+        cell_b(:,1) = x_prod(cell_a(:,2),cell_a(:,3))/vol *2*c_pi
+        cell_b(:,2) = x_prod(cell_a(:,3),cell_a(:,1))/vol *2*c_pi
+        cell_b(:,3) = x_prod(cell_a(:,1),cell_a(:,2))/vol *2*c_pi
+        !
+        ! count atoms
+        natom=0
+        do ii=1,lsize
+            if (element(ii)==0) exit
+            natom = natom + 1
+            atom(natom)%elmt=element(ii)
+        enddo
+        !
+        ! atom positions
+        if (atom_pos_conv(1:1)=='d') then
+            do ii=1,natom
+                atom_pos(:,ii) = atom_pos(1,ii)*cell_a(:,1) + atom_pos(2,ii)*cell_a(:,2) &
+                                                            + atom_pos(3,ii)*cell_a(:,3)
+            enddo
+        endif
+        !
+        do ii=1,natom
+            call TonA( atom_pos(:,ii), ltmp, vtmp, cell_a, cell_b )
+            if (ltmp(1)/=0 .or. ltmp(2)/=0 .or. ltmp(3)/=0) then
+                write(*,*) 'Error in get_obt(): atom is not in 0 0 0 lattice !!!'
+                stop
+            endif
+            atom(ii)%pos = atom_pos(:,ii)
+        enddo
+        !
+        ! local coordinates
+        if (loc_coord_conv(1:1)=='d') then
+            do ii=1,natom
+                loc_coord_z(:,ii) =  loc_coord_z(1,ii)*cell_a(:,1) + loc_coord_z(2,ii)*cell_a(:,2) &
+                                                                   + loc_coord_z(3,ii)*cell_a(:,3)
+                loc_coord_x(:,ii) =  loc_coord_x(1,ii)*cell_a(:,1) + loc_coord_x(2,ii)*cell_a(:,2) &
+                                                                   + loc_coord_x(3,ii)*cell_a(:,3)
+            enddo
+        endif
+        do ii=1,natom
+            call euler_angle(loc_coord_z(:,ii), loc_coord_x(:,ii), &
+                         atom(ii)%alph, atom(ii)%beta, atom(ii)%gamm)
+        enddo
+        !
+        ! Atoms
+        nobt=0
+        do ii=1,natom       ! atoms
+            !
+            atom(ii)%nobtL=0
+            do jj=1,lsize
+                if ( obt_list(1,jj) == 0 ) exit
+                if ( obt_list(1,jj) == atom(ii)%elmt ) then
+                    nobt = nobt + 1
+                    !
+                    ll = obt_list(2,jj)
                 mm = obt_list(3,jj)
                 !
                 nn=atom(ii)%nobtL(ll) + 1

@@ -418,15 +418,60 @@ subroutine pgrp_name( nop, op, gname, cx, ax)
     endselect
     !
 endsubroutine pgrp_name
+
+!**** find_ltgrp_r() **************************************************
 !
-!**** find_ltgrp() **************************************************
-!
-! Return the little group satsifying condition
-!   \forall g=(R,tau), g'=(R',tau') \in G(q)
-!   there is  (Rq-q)*tau'=2*pi*n, n=0,\pm 1,\pm 2 ...
+! Return the little group G(r),  which is defined as
+!   (1)  \forall g=(R,tau) \in G(r), R*r+tau=r (module a reciprocal lattice)
 !
 !********************************************************************
-subroutine find_ltgrp( qvec, nop, op, cell_a, cell_b, nlop, lop, lop2op)
+subroutine find_ltgrp_r( rvec, nop, op, cell_a, cell_b, nlop, lop, lop2op)
+    real(dp),intent(in)     :: rvec(3)      ! vector
+    integer,intent(in)      :: nop          ! number of space group operations
+    type(sym_op),intent(in) :: op(:)        ! space group operations
+    real(dp),intent(in)     :: cell_a(3,3)  ! lattice
+    real(dp),intent(in)     :: cell_b(3,3)  ! reciprocal lattice, A*B=2pi
+    integer,intent(out)     :: nlop         ! number of little group operations
+    type(sym_op),intent(out):: lop(:)       ! little group operations
+    integer,intent(out)     :: lop2op(:)    ! lop's index in op 
+    !
+    integer :: ii, ntmp(3)
+    real(dp) :: rlen, rtmp(3),ftmp(3)
+    real(dp) :: rtol=1e-3_dp
+    !
+    ! if r=(000)
+    rlen = vect_len(rvec)
+    if ( rlen<1.0e-10_dp ) then
+        nlop=nop
+        lop(1:nop) =op(1:nop)
+        do ii=1,nop
+            lop2op(ii)=ii
+        enddo
+        return
+    endif
+    !
+    nlop=0
+    do ii=1,nop
+        rtmp = matmul(op(ii)%R,rvec) + op(ii)%tau - rvec
+        call TonA(rtmp,ntmp,ftmp,cell_a,cell_b)
+        !
+        if( vect_len(ftmp)/rlen<rtol ) then
+            nlop = nlop+1
+            lop(nlop) = op(ii)
+            lop2op(nlop) = ii
+        endif
+    enddo
+endsubroutine find_ltgrp_r
+!
+!**** find_ltgrp_k() **************************************************
+!
+! Return the relevant little group G(q),  which is defined as
+!   (1)  \forall g=(R,tau) \in G(q), R*q=q (module a reciprocal lattice)
+!   (2)  \forall g=(R,tau), g'=(R',tau') \in G(q)
+!        there is  (Rq-q)*tau'=2*pi*n, n=0,\pm 1,\pm 2 ...
+!
+!********************************************************************
+subroutine find_ltgrp_k( qvec, nop, op, cell_a, cell_b, nlop, lop, lop2op)
     real(dp),intent(in)     :: qvec(3)      ! q-vector
     integer,intent(in)      :: nop          ! number of space group operations
     type(sym_op),intent(in) :: op(:)        ! space group operations
@@ -498,7 +543,7 @@ subroutine find_ltgrp( qvec, nop, op, cell_a, cell_b, nlop, lop, lop2op)
             !
         endif
     enddo
-endsubroutine find_ltgrp
+endsubroutine find_ltgrp_k
 !***********************************************************************
 !                                                                      *
       SUBROUTINE PGROUP_VASP(S,NROT,PGIND,SFNAME)

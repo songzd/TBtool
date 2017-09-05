@@ -18,14 +18,12 @@ integer, parameter       :: lsize = 30   ! max list size
 integer, parameter       :: Lmax  = 3    ! max L quantum number for orbital and D matrix
 integer, parameter       :: LTmax = 10   ! max lattice distance of TB hopping 
 !
-integer, parameter :: maxdim = 4    ! max dimension of irrep
-integer, parameter :: maxbcp = 3    ! max basis components 
-integer, parameter :: maxrep = 18   ! max number of irrep
 !
 integer, parameter :: mxRint=2      ! max lattice distabce of interaction
 !
 ! Type ==============================================================
 !
+! atom type
 type :: atom_type
     integer :: elmt
     real(kind=dp), dimension(3) :: pos 
@@ -37,6 +35,7 @@ type :: atom_type
     logical, dimension(1:2*Lmax+1,0:Lmax) :: cr  ! whether this orbital correlated
 endtype
 !
+! atomic orbital type
 type :: obt_type
     integer :: elmt                     ! Element
     integer :: at                       ! Atom
@@ -49,6 +48,7 @@ type :: obt_type
     logical :: cr                       ! whether this orbital correlated
 endtype
 !
+!
 type :: sym_op
     character(len=30) :: str                ! The name of this operation
     real(kind=dp), dimension(3,3) :: R      ! Rotation matrix (in cart)
@@ -59,6 +59,12 @@ type :: sym_op
     real(kind=dp)               :: thet     ! Rotation angle
     integer                     :: rotm     ! Rotational order = 2pi/thet
 endtype
+!
+! Irreps ------------------------------------------------------------
+!
+integer, parameter :: maxdim = 4    ! max dimension of irrep
+integer, parameter :: maxbcp = 3    ! max basis components 
+integer, parameter :: maxrep = 18   ! max number of irrep
 !
 type :: irepbs_type
     integer     :: J         ! Total angular momentum
@@ -76,4 +82,28 @@ type :: irep_type
     complex(kind=dp), dimension(48)       :: cha          ! character table
 endtype
 
+!
+! pseudo-atom and wannier functions ---------------------------------
+!
+integer, parameter :: maxrep_pat=30
+type :: pat_type
+    integer              :: kd
+    real(dp)             :: pos(3)
+    character(len=30)    :: SSG
+    real(dp)             :: alph, beta, gamm
+    integer              :: nirep
+    integer              :: widx(maxdim,maxrep_pat)
+endtype
+!
+type :: wan_type
+    integer     :: kd                   ! kind
+    integer     :: at                   ! Atom
+    integer     :: iirep                ! belongs to the iirep-th irep at atom at
+    real(dp)    :: pos(3)               ! Position
+    real(dp)    :: alph, beta, gamm     ! Euler's angles
+    integer     :: J                    ! Total angular momentum
+    integer     :: M(maxbcp)            ! Jz angular momentums  
+    complex(dp) :: C(maxbcp)            ! Coefficients
+endtype
+!
 ENDMODULE typcnst

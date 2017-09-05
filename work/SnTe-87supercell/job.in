@@ -11,7 +11,7 @@
     klist(:,7)  = 0.5  0.0  0.5
     klist(:,8)  = 0.0  0.0  0.5
 /
-&ImposeSym
+&ImposeSymm
     cut_eng  = 1.0d-7
     cut_dist = 20
 /
@@ -27,23 +27,18 @@
 /
 &SilceWannier
     k_conv  = 'direct'
-    kzslice = 0
-    band_start=1
-    band_end  =12
+    kz_sls = 0
+    bstart=1
+    bend  =12
     !
-    ! wan-atoms
-    swatom_type = 1  1
-    swatom_pos_conv = 'direct'
-    swatom_pos(:,1) = 0    0    0
-    swatom_pos(:,2) = 0.5  0.5  0
-    !
-    ! local coordinates
-    loc_coord_conv = 'cart'
-    loc_coord_z(:,1) =  0, 0, 1   loc_coord_x(:,1)=  1, -1, 0
-    loc_coord_z(:,2) =  0, 0, 1   loc_coord_x(:,2)=  1, -1, 0
+    ! pseudo-atoms
+    pat_kind = 1  1
+    pat_pos_conv = 'direct'
+    pat_pos(:,1) = 0    0    0
+    pat_pos(:,2) = 0.5  0.5  0
     !
     ! slice-wanniers
-    swan_list(:,1) = 1  D4h  E12u
-    swan_list(:,2) = 1  D4h  E12u
-    swan_list(:,3) = 1  D4h  E32u
+    wan_list(:,1) = 1  'D4h'  E12u
+    wan_list(:,2) = 1  'D4h'  E12u
+    wan_list(:,3) = 1  'D4h'  E32u
 /
