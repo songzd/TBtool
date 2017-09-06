@@ -12,7 +12,7 @@
     klist(:,8)  = 0.0  0.0  0.5
 /
 &ImposeSymm
-    cut_eng  = 1.0d-7
+    cut_eng  = 1.0d-5
     cut_dist = 20
 /
 &BandIrrep

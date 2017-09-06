@@ -84,17 +84,17 @@ type :: irep_type
 endtype
 
 !
-! pseudo-atom and wannier functions ---------------------------------
+! slice-atom for wannier projector ----------------------------------
 !
-integer, parameter :: maxrep_pat=30
-type :: pat_type
+integer, parameter :: maxrep_sat=30
+type :: sat_type
     integer              :: kd
     real(dp)             :: pos(3)
     character(len=30)    :: SSG
     real(dp)             :: alph, beta, gamm
     integer              :: nirep
-    character(len=30)    :: irep(maxrep_pat)
-    integer              :: idx1(maxrep_pat), idx2(maxrep_pat)
+    character(len=30)    :: irep(maxrep_sat)
+    integer              :: idx1(maxrep_sat), idx2(maxrep_sat)
 endtype
 !
 ENDMODULE typcnst

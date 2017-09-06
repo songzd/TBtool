@@ -11,7 +11,7 @@ module symm
 use typcnst, only : dp, LTmax, sym_op, c_pi, c_im, Lmax
 use my_math, only : dot_prod, mix_prod, vect_len, othmat, unimat
 use pntgrp,  only : TonA, make_group, pgrp_name
-use reprsnt, only : dmat_rl, dmat_rl_op, dmat_spin
+use reprsnt, only : dmat_rl, dmat_spin
 use tghtbd,  only : cell_a, cell_b, natom, atom, h0_dat, h0_lat, h0_lat_num, &
                     h0_LTidx, nobt, nobt2
 !
@@ -19,7 +19,7 @@ implicit none
 !
 private
 public :: get_sym, cstrct_rep, spgop, nspgop, time_rev, mtpltb, atmap, &
-          atmapR, rep_at, reps_at
+          atmapR, rep_at, reps_at, symtol
 
 !
 ! 18 group generators
@@ -170,7 +170,9 @@ subroutine cstrct_rep(nspin)
         !
         ! calculate D-matrix of gg
         do LL=0,Lmax
-            call Dmat_RL_op( spgop(gg), dmat_op(-LL:LL,-LL:LL,LL), LL )
+            call dmat_rl( spgop(gg)%alph, spgop(gg)%beta, spgop(gg)%gamm, &
+                          dmat_op(-LL:LL,-LL:LL,LL), LL )
+            if ( spgop(gg)%det==-1 .and. mod(LL,2)==1 ) dmat_op(:,:,LL)=-dmat_op(:,:,LL)
         enddo
         !
         if (nspin==2) then
@@ -206,7 +208,7 @@ subroutine cstrct_rep(nspin)
                     matmul(transpose(dmat_at(-La:La,-La:La,La,aap)), dmat(-La:La,-La:La))
                 do ii=1,nn
                 do jj=1,nn
-                    rep_at(ii,jj,La,aa,gg) = dmat(atom(aa)%M(ii,La), atom(aa)%M(jj,La))
+                    rep_at(ii,jj,La,aa,gg) = dmat(atom(aap)%M(ii,La), atom(aa)%M(jj,La))
                 enddo
                 enddo
                 !

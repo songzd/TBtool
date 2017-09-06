@@ -3,7 +3,7 @@ program TBtool
     use typcnst,    only: DP, i12
     use tghtbd,     only: get_obt, get_hr, nspin
     use symm,       only: get_sym, cstrct_rep
-    use slicewann,  only: get_swan
+    use slicewann,  only: get_swan, cstrct_rep_slice
     !
     implicit none
     !
@@ -40,6 +40,7 @@ program TBtool
     case('sl')
         ! slice-wannier
         call get_swan()
+        call cstrct_rep_slice()
     case default
         write(*,'(1X, "Nothing to be done")')
     endselect

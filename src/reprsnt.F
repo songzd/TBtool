@@ -796,17 +796,6 @@ endif
     !
 endsubroutine set_pntgrp_irep
 !
-!
-subroutine Dmat_rl_op(op,Dmat,L)
-    type(sym_op) :: op
-    real(kind=dp), dimension(-L:L,-L:L) :: Dmat
-    integer      :: L
-    !   
-    call Dmat_rl(op%alph, op%beta, op%gamm, Dmat, L ) 
-    if ( op%det==-1 .and. mod(L,2)==1) Dmat=-Dmat
-    !   
-endsubroutine
-!
 ! real D matrix, on real spherical harmonics
 subroutine Dmat_rl(alph,beta,gamm,Dmat,L)
     !   
@@ -832,6 +821,7 @@ subroutine Dmat_rl(alph,beta,gamm,Dmat,L)
     enddo
     !   
 endsubroutine Dmat_rl
+!
 !
 !**** dmat_cmplx() **************************************************
 !
