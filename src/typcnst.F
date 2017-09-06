@@ -67,6 +67,7 @@ integer, parameter :: maxbcp = 3    ! max basis components
 integer, parameter :: maxrep = 18   ! max number of irrep
 !
 type :: irepbs_type
+    integer     :: P         ! parity
     integer     :: J         ! Total angular momentum
     integer     :: M(maxbcp) ! Jz angular momentums  
     complex(dp) :: C(maxbcp) ! Coefficients
@@ -92,18 +93,8 @@ type :: pat_type
     character(len=30)    :: SSG
     real(dp)             :: alph, beta, gamm
     integer              :: nirep
+    character(len=30)    :: irep(maxrep_pat)
     integer              :: idx1(maxrep_pat), idx2(maxrep_pat)
-endtype
-!
-type :: wan_type
-    integer     :: kd                   ! kind
-    integer     :: at                   ! Atom
-    integer     :: iirep                ! belongs to the iirep-th irep at atom at
-    real(dp)    :: pos(3)               ! Position
-    real(dp)    :: alph, beta, gamm     ! Euler's angles
-    integer     :: J                    ! Total angular momentum
-    integer     :: M(maxbcp)            ! Jz angular momentums  
-    complex(dp) :: C(maxbcp)            ! Coefficients
 endtype
 !
 ENDMODULE typcnst

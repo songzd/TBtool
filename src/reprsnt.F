@@ -673,6 +673,10 @@ endif
                 irep(xi)%P = 1
             endif
         endif
+        !
+        do ii=1,irep(xi)%D
+            irep(xi)%bs(ii)%P = irep(xi)%P
+        enddo
     enddo
     !
     ! Calculate Euler angles in cax aax ====================
