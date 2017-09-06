@@ -33,6 +33,7 @@ integer                    :: nspgen        ! Number of generators
 integer,dimension(48,48)   :: mtpltb        ! Multiplication table of the point group operations
 character(len=30)          :: tau_conv      ! Coorindates convention for input of tau
 logical                    :: time_rev      ! Time Reversal 
+real(dp)                   :: symtol        ! tolerace of symmetry check
 !
 namelist /Symmetry/ spgop, tau_conv, time_rev
 !

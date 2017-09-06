@@ -1,5 +1,6 @@
 module band
 !
+!
 use typcnst,    only : DP, c_pi, c_im, lsize, atom_type, Lmax, sym_op
 use pntgrp,     only: TonA
 use my_math,    only : vect_len, dot_prod
