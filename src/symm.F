@@ -35,7 +35,7 @@ character(len=30)          :: tau_conv      ! Coorindates convention for input o
 logical                    :: time_rev      ! Time Reversal 
 real(dp)                   :: symtol        ! tolerace of symmetry check
 !
-namelist /Symmetry/ spgop, tau_conv, time_rev
+namelist /Symmetry/ spgop, tau_conv, time_rev, symtol
 !
 !  Variables to construct representation matrices
 integer, allocatable, dimension(:,:)   :: atmap   ! Atoms mapping, gg*aa is the atmap(aa,gg)
@@ -184,7 +184,7 @@ subroutine cstrct_rep(nspin)
             call TonA( matmul(spgop(gg)%R,atom(aa)%pos) + spgop(gg)%tau, &
                        atmapR(:,aa,gg), aapos, cell_a, cell_b )
             do bb=1,natom
-                if ( vect_len( aapos-atom(bb)%pos )<1.0e-7_dp .and. &
+                if ( vect_len( aapos-atom(bb)%pos )<symtol .and. &
                      atom(bb)%elmt==atom(aa)%elmt ) exit
             enddo
             atmap(aa,gg)=bb
@@ -276,6 +276,7 @@ subroutine read_sym()
     spgop(:)%str='null'
     spgop(:)%det=0
     time_rev = .false.
+    symtol = 1.0d-5
     !
     open(unit=100, file='system.in', status='old')
     read(100, Symmetry)
@@ -330,7 +331,7 @@ subroutine read_sym()
             !
             ! check the new position
             do jj=1,natom
-                if ( vect_len( atom(jj)%pos-atom_pos1(:,ii) )<1.0e-7_dp &
+                if ( vect_len( atom(jj)%pos-atom_pos1(:,ii) )<symtol &
                      .and. atom(jj)%elmt==atom(ii)%elmt) cnt=cnt+1
             enddo
             !

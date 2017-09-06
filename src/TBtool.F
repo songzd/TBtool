@@ -183,7 +183,7 @@ subroutine impose_sym_H0()
     !
     ! controlling parameters
     real(kind=dp) ::  cut_dist, cut_eng
-    namelist /ImposeSym/    cut_dist, cut_eng
+    namelist /ImposeSymm/    cut_dist, cut_eng
     !
     integer :: RR,ii,jj
     real(kind=dp), dimension(3) :: latt
@@ -220,7 +220,7 @@ subroutine impose_sym_H0()
     ! Output ========================================================
     !
     open(unit=100, file='job.in', status='old')
-    read(100, ImposeSym)
+    read(100, ImposeSymm)
     close(100)
     !
     open(100,file='hr.dat.sym',status='replace')
