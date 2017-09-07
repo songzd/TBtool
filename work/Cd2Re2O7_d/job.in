@@ -1,4 +1,4 @@
-&ImposeSym
+&ImposeSymm
    cut_eng = 0.0d-7
    cut_dist = 1000
 /

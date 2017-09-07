@@ -129,7 +129,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
     ! the symmetrized hr
     complex(kind=dp), dimension(nobt2,nobt2,hr_lat_num) :: hr_sym
     real(kind=dp), dimension(nspin,nspin) :: Ut 
-    logical :: badlat(lsize,lsize,5000)
+    logical :: badlat(nobt2,nobt2,hr_lat_num)
     !
     ! g0R  
     real(kind=dp), dimension(3) :: g0R_
@@ -146,6 +146,8 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
     do RR=1,hr_lat_num   ! RR loop
     do aa=1,natom        ! atom loop
     do bb=1,natom
+        !
+        ! point group
         do gg=1,nop      ! gg loop
             g0R_ = hr_lat(1,RR)*cell_a(:,1) + hr_lat(2,RR)*cell_a(:,2) + &
                    hr_lat(3,RR)*cell_a(:,3)
@@ -156,9 +158,16 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
             RRp = LTidx( g0R(1)+atmapR(1,bb,gg)-atmapR(1,aa,gg), &
                          g0R(2)+atmapR(2,bb,gg)-atmapR(2,aa,gg), &
                          g0R(3)+atmapR(3,bb,gg)-atmapR(3,aa,gg) )
-            !
             if (RRp==0) badlat(aa,bb,RR) = .true.
         enddo
+        !
+        ! TR
+        if (time_rev) then
+            g0R = - hr_lat(:,RR)
+            RRp = LTidx(g0R(1), g0R(2), g0R(3))
+            if (RRp==0) badlat(:,:,RR) = .true.
+        endif
+        !
     enddo
     enddo
     enddo
@@ -167,7 +176,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
     !
     !hr_sym(:,:,:) = 0.0_dp
     !do RR=1,hr_lat_num
-        !
+    !   !
     !    RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR) )
     !    if (RRp==0) cycle 
     !    !
@@ -263,7 +272,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
         do RR=1,hr_lat_num
             !
             RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR))
-            if(RRp==0) cycle
+            !if(RRp==0) cycle
             !
             do aa=1,natom
             do La=0,Lmax
@@ -275,6 +284,9 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
             do jj=1,atom(bb)%nobtL(Lb)
             do mm=1,nspin
                 jj_ = atom(bb)%idx(jj,Lb) + (mm-1)*nobt
+                !
+                if (badlat(aa,bb,RR )) cycle   ! <=> RRp=0
+                if (badlat(bb,aa,RRp)) cycle
                 !
                 do nnp=1,nspin
                     iip_ = atom(aa)%idx(ii,La) + (nnp-1)*nobt
