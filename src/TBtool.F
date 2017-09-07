@@ -3,7 +3,7 @@ program TBtool
     use typcnst,    only: DP, i12
     use tghtbd,     only: get_obt, get_hr, nspin
     use symm,       only: get_sym, cstrct_rep
-    use sliceproj,  only: read_swan, cstrct_rep_slice
+    use slice,      only: read_swan, cstrct_rep_slice
     !
     implicit none
     !

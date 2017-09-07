@@ -1,19 +1,19 @@
-!**** sliceproj *****************************************************
+!**** slice *********************************************************
 !
 ! This module offers slice-wannier projection information and slice-
 !  wannierise controling parameters
 !
 !********************************************************************
-module sliceproj
+module slice
 !
 use typcnst,    only: DP, sat_type, irepbs_type, lsize, sym_op, irep_type, maxrep_sat, &
-                      maxdim, Lmax, maxbcp
+                      maxdim, Lmax, maxbcp, c_pi
 use my_math,    only: vect_len, unimat
 use pntgrp,     only: TonA, find_ltgrp_r, pgrp_name, euler_angle
 use reprsnt,    only: init_pntgrp_bst, set_pntgrp_irep, dmat_cmplx
 !
 use tghtbd,     only: cell_a, cell_b, nspin
-use symm,       only: nspgop, spgop, symtol
+use symm,       only: nspgop, spgop, symtol, time_rev
 !
 implicit none
 !
@@ -34,6 +34,7 @@ type(irepbs_type)               :: sproj(maxnsproj)   ! sprojnier functions
 integer, allocatable        :: satmap(:,:)          ! satoms mapping, gg*aa is the atmap(aa,gg)
 integer, allocatable        :: satmapR(:,:,:)       ! satom in the atmapR(:,aa,gg) lattice
 complex(dp), allocatable    :: rep_sat(:,:,:,:,:)   ! rotation matrix
+complex(dp), allocatable    :: Ut_sat(:,:,:,:)      ! Time reversal matrix
 !
 !
 contains
@@ -132,8 +133,8 @@ subroutine read_swan()
                         nn = sat(ii)%nirep
                         nsproj = nsproj + irep(xi)%D
                         !
-                        sat(ii)%idx1(nn) = nsproj - irep(xi)%D + 1
-                        sat(ii)%idx2(nn) = nsproj
+                        sat(ii)%idx(nn)  = nsproj - irep(xi)%D + 1
+                        sat(ii)%deg(nn)  = irep(xi)%D
                         sat(ii)%irep(nn) = irep(xi)%name
                         !
                         do kk=1, irep(xi)%D
@@ -161,7 +162,7 @@ subroutine read_swan()
     do xi=1,sat(ii)%nirep
         write(*,'(6X, "(", 3F8.4, ")   ",  A5, "  (", 3F8.4, ")  ", A5, I4, " - ", I4)')  &
         sat(ii)%pos, sat(ii)%SSG, sat(ii)%alph, sat(ii)%beta, sat(ii)%gamm, sat(ii)%irep(xi), &
-        sat(ii)%idx1(xi), sat(ii)%idx2(xi)
+        sat(ii)%idx(xi), sat(ii)%idx(xi) + sat(ii)%deg(xi) 
     enddo
     enddo
     !
@@ -172,7 +173,7 @@ endsubroutine read_swan
 !********************************************************************
 subroutine cstrct_rep_slice()
     integer         :: aa, bb, aap, ii, jj, LL, gg, xi, idx1, idx1p, Jt, &
-                       deg, nn, mm
+                       deg, nn, mm, ii_, jj_
     real(dp)        :: aapos(3)    ! used for atom mapping
     !
     ! D matrix of slice-atoms
@@ -213,6 +214,8 @@ subroutine cstrct_rep_slice()
     satmapR(:,:,:)=0
     rep_sat(:,:,:,:,:) = 0.0_dp
     !
+    ! Space group operation =========================================
+    !
     do gg=1,nspgop
         !
         ! sat mapping -----------------------------------------------
@@ -250,9 +253,9 @@ subroutine cstrct_rep_slice()
             do xi=1, sat(aa)%nirep
                 !
                 ! get projector index and total angular momentum
-                idx1  = sat( aa)%idx1(xi)
-                idx1p = sat(aap)%idx1(xi)
-                deg   = sat( aa)%idx2(xi) - idx1 + 1
+                idx1  = sat( aa)%idx(xi)
+                idx1p = sat(aap)%idx(xi)
+                deg   = sat( aa)%deg(xi)
                 Jt = sproj(idx1)%J
                 LL = abs(Jt)
                 ! 
@@ -279,7 +282,7 @@ subroutine cstrct_rep_slice()
                     stop
                 endif
                 !
-                ! write to out.rep_at 
+                ! write to out.rep_sat 
                 write(100, '("iop=", I4, "  aa=", I4, "  aap=", I4, "  Rp=",3I4, "  ********************")') &
                     gg, aa, aap, satmapR(:,aa,gg)
                 write(100, '(4X, "Projector on aa :  ", A5, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
@@ -293,7 +296,48 @@ subroutine cstrct_rep_slice()
         !
     enddo
     !
+    ! Time reversal =================================================
+    !
+    allocate(Ut_sat(maxdim,maxdim,maxrep_sat,nsat))
+    Ut_sat = 0.0_dp
+    !
+    do aa=1,nsat
+        do xi=1,sat(aa)%nirep
+            !
+            idx1 = sat(aa)%idx(xi)
+            deg  = sat(aa)%deg(xi)
+            !
+            Jt = sproj(idx1)%J
+            LL = abs(Jt)
+            dmat = 0.0_dp
+            call dmat_cmplx( 0.0_dp, c_pi, 0.0_dp, dmat(-LL:LL,-LL:LL), Jt )
+            ! 
+            do ii=1,deg
+            do jj=1,deg
+                ii_ = ii - 1 + idx1
+                jj_ = jj - 1 + idx1
+                do nn=1,maxbcp
+                do mm=1,maxbcp
+                    Ut_sat(ii,jj,xi,aa) = Ut_sat(ii,jj,xi,aa)  &
+                    + conjg(sproj(ii_)%C(nn))*dmat(sproj(ii_)%M(nn), sproj(jj_)%M(mm) )*conjg(sproj(jj_)%C(mm))
+                enddo
+                enddo
+                !
+            enddo
+            enddo
+            !
+            ! write to out.rep_sat 
+            write(100, '("Time reversal on at aa=", I4, "  ********************")') aa
+            write(100, '(4X, "Projector on aa :  ", A5, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
+            !
+            do ii=1,deg
+                write(100,'(4X,  4(2F10.5, 5X) )') Ut_sat(ii,1:deg,xi,aa)
+            enddo
+            !
+        enddo
+    enddo
+    !
     close(100)
 endsubroutine cstrct_rep_slice
 
-endmodule sliceproj
+endmodule slice

@@ -10,7 +10,7 @@ SUFFIX=.f90
 CPP=fpp -f_com=no -free -w0 $*.F $*$(SUFFIX)
 
 
-MODULE = typcnst.o my_math.o pntgrp.o reprsnt.o band.o tghtbd.o symm.o sliceproj.o \
+MODULE = typcnst.o my_math.o pntgrp.o reprsnt.o band.o tghtbd.o symm.o slice.o \
          slicewann.o
 EXE =  TBtool
 

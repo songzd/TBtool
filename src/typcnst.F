@@ -94,7 +94,7 @@ type :: sat_type
     real(dp)             :: alph, beta, gamm
     integer              :: nirep
     character(len=30)    :: irep(maxrep_sat)
-    integer              :: idx1(maxrep_sat), idx2(maxrep_sat)
+    integer              :: idx(maxrep_sat), deg(maxrep_sat)
 endtype
 !
 ENDMODULE typcnst
