@@ -123,29 +123,37 @@ subroutine read_swan()
                 endif
                 !
                 ! set the projector
+                !
                 findproj = .false.
+                !
+                nn = sat(ii)%nirep + 1
+                sat(ii)%deg(nn)  = 0
+                sat(ii)%idx(nn)  = nsproj + 1
+                sat(ii)%irep(nn) = ''
+                !
                 do xi=1,nirep
-                    if ( trim(adjustl(irep(xi)%name)) == trim(adjustl(sproj_list(3,jj))) ) then
+                    if ( index( sproj_list(3,jj), trim(adjustl(irep(xi)%name)) )>0 ) then
                         !
                         findproj = .true.
                         !
-                        sat(ii)%nirep = sat(ii)%nirep + 1    
-                        nn = sat(ii)%nirep
+                        sat(ii)%deg(nn) = sat(ii)%deg(nn) + irep(xi)%D
                         nsproj = nsproj + irep(xi)%D
-                        !
-                        sat(ii)%idx(nn)  = nsproj - irep(xi)%D + 1
-                        sat(ii)%deg(nn)  = irep(xi)%D
-                        sat(ii)%irep(nn) = irep(xi)%name
+                        if ( trim(adjustl(sat(ii)%irep(nn)))=='' ) then
+                            sat(ii)%irep(nn) = trim(adjustl(irep(xi)%name))
+                        else
+                            sat(ii)%irep(nn) = trim(adjustl(sat(ii)%irep(nn))) // '+' // trim(adjustl(irep(xi)%name))
+                        endif
                         !
                         do kk=1, irep(xi)%D
-                            sproj(nsproj-irep(xi)%D+kk) = irep(xi)%bs(kk)
+                            sproj(nsproj - irep(xi)%D + kk) = irep(xi)%bs(kk)
                         enddo
                         !
-                        exit
                     endif
                 enddo
                 !
-                if (.not. findproj ) then
+                if ( findproj ) then
+                    sat(ii)%nirep = nn
+                else
                     write(*,*) 'Error in get_sproj(): sproj does mismatch !!!' 
                     stop
                 endif
@@ -160,9 +168,9 @@ subroutine read_swan()
     write(*,'(6X, "Position (in cart)", 11X, "SSG", 4X, "Euler angle", 17X, "Projector")')
     do ii=1,nsat
     do xi=1,sat(ii)%nirep
-        write(*,'(6X, "(", 3F8.4, ")   ",  A5, "  (", 3F8.4, ")  ", A5, I4, " - ", I4)')  &
+        write(*,'(6X, "(", 3F8.4, ")   ",  A5, "  (", 3F8.4, ")  ", A12, I4, " - ", I4)')  &
         sat(ii)%pos, sat(ii)%SSG, sat(ii)%alph, sat(ii)%beta, sat(ii)%gamm, sat(ii)%irep(xi), &
-        sat(ii)%idx(xi), sat(ii)%idx(xi) + sat(ii)%deg(xi) 
+        sat(ii)%idx(xi), sat(ii)%idx(xi) + sat(ii)%deg(xi) - 1
     enddo
     enddo
     !
@@ -285,8 +293,8 @@ subroutine cstrct_rep_slice()
                 ! write to out.rep_sat 
                 write(100, '("iop=", I4, "  aa=", I4, "  aap=", I4, "  Rp=",3I4, "  ********************")') &
                     gg, aa, aap, satmapR(:,aa,gg)
-                write(100, '(4X, "Projector on aa :  ", A5, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
-                write(100, '(4X, "Projector on aap:  ", A5, 2X, I4, " - ",I4 )' ) sat(aap)%irep(xi), idx1p, idx1p+deg-1 
+                write(100, '(4X, "Projector on aa :  ", A12, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
+                write(100, '(4X, "Projector on aap:  ", A12, 2X, I4, " - ",I4 )' ) sat(aap)%irep(xi), idx1p, idx1p+deg-1 
                 !
                 do ii=1,deg
                     write(100,'(4X,  4(2F10.5, 5X) )') rep_sat(ii,1:deg,xi,aa,gg)
@@ -326,9 +334,16 @@ subroutine cstrct_rep_slice()
             enddo
             enddo
             !
+            ! Check Ut
+            !
+            if ( .not. unimat( Ut_sat(1:deg,1:deg,xi,aa), deg ) ) then
+                write(*,*) 'Error in cstrct_rep_slice(): Ut is not unitary !!!'
+                stop
+            endif
+            !
             ! write to out.rep_sat 
-            write(100, '("Time reversal on at aa=", I4, "  ********************")') aa
-            write(100, '(4X, "Projector on aa :  ", A5, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
+            write(100, '("Time reversal on at aa=", I4, "  *************************************")') aa
+            write(100, '(4X, "Projector on aa :  ", A12, 2X, I4, " - ",I4 )' ) sat( aa)%irep(xi),  idx1, idx1+deg-1
             !
             do ii=1,deg
                 write(100,'(4X,  4(2F10.5, 5X) )') Ut_sat(ii,1:deg,xi,aa)

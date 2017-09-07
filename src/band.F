@@ -271,7 +271,7 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
         !
         do RR=1,hr_lat_num
             !
-            RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR))
+            !RRp = LTidx(-hr_lat(1,RR),-hr_lat(2,RR),-hr_lat(3,RR))
             !if(RRp==0) cycle
             !
             do aa=1,natom
@@ -286,15 +286,17 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
                 jj_ = atom(bb)%idx(jj,Lb) + (mm-1)*nobt
                 !
                 if (badlat(aa,bb,RR )) cycle   ! <=> RRp=0
-                if (badlat(bb,aa,RRp)) cycle
+                !if (badlat(bb,aa,RRp)) cycle
                 !
                 do nnp=1,nspin
                     iip_ = atom(aa)%idx(ii,La) + (nnp-1)*nobt
                 do mmp=1,nspin
                     jjp_ = atom(bb)%idx(jj,Lb) + (mmp-1)*nobt
                     !
+                    !hr_sym(ii_,jj_,RR) = hr_sym(ii_,jj_,RR) &
+                    ! + hr_dat(jjp_,iip_,RRp)*Ut(nnp,nn)*Ut(mmp,mm)
                     hr_sym(ii_,jj_,RR) = hr_sym(ii_,jj_,RR) &
-                     + hr_dat(jjp_,iip_,RRp)*Ut(nnp,nn)*Ut(mmp,mm)
+                     + conjg(hr_dat(iip_,jjp_,RR))*Ut(nnp,nn)*Ut(mmp,mm)
                     !
                 enddo
                 enddo

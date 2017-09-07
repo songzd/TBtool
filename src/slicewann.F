@@ -77,7 +77,7 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
 endsubroutine random_ovlp
 
 subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  & 
-                      nat,  at,  nobt, nobt2, nspin, atmap,  atmapR, rep_at, reps_at, &
+                      nat,  at,  nobt, nobt2, nspin, atmap,  atmapR, rep_at, reps_at, Ut_sat, &
                       nlatt, latt, Rmax, LTidx, cell_a, cell_b, &
                       time_rev, nop, op, &
                       ovlp )
@@ -91,6 +91,7 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
     integer,intent(in)              :: atmapR(3,nsat,nop)
     real(dp),intent(in)             :: rep_at(1:2*Lmax+1,1:2*Lmax+1,0:Lmax,nat,nop)
     complex(dp),intent(in)          :: reps_at(nspin,nspin,nat,nop)
+    complex(dp),intent(in)          :: Ut_sat(maxdim,maxdim,maxrep_sat,nsat)        ! TR matrix
     integer,intent(in)              :: latt(3,nlatt)
     integer,intent(in)              :: LTidx(-Rmax:Rmax, -Rmax:Rmax, -Rmax:Rmax)
     real(dp),intent(in)             :: cell_a(3,3), cell_b(3,3)
@@ -222,6 +223,40 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
         endif
         !
         do RR=1,nlatt
+            !
+            !RRp = LTidx(-latt(1,RR),-latt(2,RR),-latt(3,RR)) 
+            !
+            do aa=1,nat
+            do LL=0,Lmax
+            do jj=1,at(aa)%nobtL(LL)
+            do nn=1,nspin
+                jj_ = at(aa)%idx(jj,LL) + (nn-1)*nspin
+            do ss=1,nsat
+            do xi=1,sat(ss)%nirep
+            do ii=1,sat(ss)%deg(xi)
+                ii_ = sat(ss)%idx(xi) + ii - 1
+                !
+                if(badlat(ss,aa,RR)) cycle
+                !
+                do nnp=1,nspin
+                    jjp_ = at(aa)%idx(jj,LL) + (nnp-1)*nspin
+                do iip=1,sat(ss)%deg(xi)
+                    iip_ = sat(ss)%idx(xi) + iip - 1 
+                    !
+                    ovlp_sym(ii_,jj_,RR) = ovlp_sym(ii_,jj_,RR) &
+                    + conjg(ovlp(iip_,jjp_,RR))*Ut(nnp,nn)*Ut_sat(jjp,jj,xi,ss)
+                    !
+                enddo
+                enddo
+                !
+            enddo
+            enddo
+            enddo
+            !
+            enddo
+            enddo
+            enddo
+            enddo
             !
         enddo
         !
