@@ -6,7 +6,7 @@
 !********************************************************************
 module slice
 !
-use typcnst,    only: DP, sat_type, irepbs_type, lsize, sym_op, irep_type, maxrep_sat, &
+use typcnst,    only: DP, sat_type, irepbs_type, lsize, sym_op, irep_type, &
                       maxdim, Lmax, maxbcp, c_pi
 use my_math,    only: vect_len, unimat
 use pntgrp,     only: TonA, find_ltgrp_r, pgrp_name, euler_angle
@@ -26,9 +26,11 @@ integer                         :: bstart, bend     ! bands to construct WFs
 ! pseudo-atoms and slice-wannier projector
 integer,parameter               :: maxnsproj=100     ! max number of nsproj
 integer                         :: nsproj            ! number of sprojnier functions
-integer                         :: nsat             ! number of pseudo-atoms
-type(sat_type)                  :: sat(lsize)       ! pseudo-atoms
-type(irepbs_type)               :: sproj(maxnsproj)   ! sprojnier functions
+integer                         :: maxrep_sat        ! number of sprojnier functions
+integer                         :: nsat              ! number of pseudo-atoms
+type(sat_type)                  :: sat(lsize)        ! pseudo-atoms
+type(irepbs_type)               :: sproj(maxnsproj)  ! sprojnier functions
+real(dp)                        :: dist_cut          ! distance cut off for overlap
 !
 ! rotation matrix
 integer, allocatable        :: satmap(:,:)          ! satoms mapping, gg*aa is the atmap(aa,gg)
@@ -51,7 +53,7 @@ subroutine read_swan()
     character(len=30)   :: sproj_list(3,lsize)
     !
     namelist /SliceWannier/ k_conv, kz_sls, bstart, bend, sat_kind, &
-                            sat_pos_conv, sat_pos, sproj_list
+                            sat_pos_conv, sat_pos, sproj_list, dist_cut
     !
     integer             :: ii, jj, kk, nn, xi
     real(dp)            :: vtmp(3), cax(3), aax(3)
@@ -68,6 +70,7 @@ subroutine read_swan()
     !
     sat_kind  = 0
     sproj_list = ''
+    dist_cut = 3
     open(unit=100, file='job.in', status='old')
     read(100, SliceWannier)
     close(100)
@@ -160,6 +163,11 @@ subroutine read_swan()
                 !
             endif
         enddo
+    enddo
+    !
+    maxrep_sat=0
+    do ii=1,nsat
+        if( sat(ii)%nirep>maxrep_sat ) maxrep_sat = sat(ii)%nirep
     enddo
     !
     ! output projector information

@@ -86,15 +86,15 @@ endtype
 !
 ! slice-atom for wannier projector ----------------------------------
 !
-integer, parameter :: maxrep_sat=30
+integer, parameter :: repsat_allow=30
 type :: sat_type
     integer              :: kd
     real(dp)             :: pos(3)
     character(len=30)    :: SSG
     real(dp)             :: alph, beta, gamm
     integer              :: nirep
-    character(len=30)    :: irep(maxrep_sat)
-    integer              :: idx(maxrep_sat), deg(maxrep_sat)
+    character(len=30)    :: irep(repsat_allow)
+    integer              :: idx(repsat_allow), deg(repsat_allow)
 endtype
 !
 ENDMODULE typcnst

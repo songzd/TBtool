@@ -3,7 +3,6 @@ program TBtool
     use typcnst,    only: DP, i12
     use tghtbd,     only: get_obt, get_hr, nspin
     use symm,       only: get_sym, cstrct_rep
-    use slice,      only: read_swan, cstrct_rep_slice
     !
     implicit none
     !
@@ -39,8 +38,7 @@ program TBtool
         call band_irreps()
     case('sl')
         ! slice-wannier
-        call read_swan()
-        call cstrct_rep_slice()
+        call build_swan()
     case default
         write(*,'(1X, "Nothing to be done")')
     endselect
@@ -409,5 +407,33 @@ subroutine band_irreps()
     call bndspc_rls()
     !
 endsubroutine band_irreps
+
+subroutine build_swan()
+    !
+    use typcnst,    only: dp, LTmax
+    use tghtbd,     only: cell_a, cell_b, nat=>natom, at=>atom, nobt, nspin, nobt2, &
+                          nlatt=>h0_lat_num, latt=>h0_lat, LTidx=>h0_LTidx
+    use symm,       only: nop=>nspgop, op=>spgop, time_rev, atmap, atmapR, rep_at, reps_at
+    use slice,      only: read_swan, cstrct_rep_slice, nsat, sat, maxrep_sat, nsproj, satmap, &
+                          satmapR, rep_sat, Ut_sat, dist_cut
+    !
+    use slicewann,  only: random_ovlp, symm_ovlp
+    !
+    complex(dp)         :: ovlp(nsproj,nobt2,nlatt)
+    !
+    ! get slice projector information ===============================
+    !
+    call read_swan()
+    call cstrct_rep_slice()
+    !
+    ! set random ovlp ===============================================
+    !
+    call random_ovlp( nsat, sat, maxrep_sat, nsproj, nat, at, nobt, nobt2, &
+                      nspin, nlatt, latt, cell_a, dist_cut, ovlp)
+    !
+
+
+
+endsubroutine build_swan
 
 endprogram TBtool

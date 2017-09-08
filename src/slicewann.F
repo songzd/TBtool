@@ -5,7 +5,7 @@
 !********************************************************************
 module slicewann
 !
-use typcnst,    only: dp, sat_type, irepbs_type, maxdim, maxrep_sat, Lmax, sym_op, &
+use typcnst,    only: dp, sat_type, irepbs_type, maxdim, Lmax, sym_op, &
                       atom_type, c_im
 use my_math,    only: vect_len, init_random_seed
 use pntgrp,     only: TonA
@@ -21,19 +21,22 @@ contains
 !   O(ss,ii;aa,jj;RR) = < 0,ss,ii | RR,aa,jj >
 !
 !********************************************************************
-subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, latt, & 
-                        cell_a, cell_b, dist_cut, ovlp)
-    integer,intent(in)              :: nsat, nsproj, nat, nobt, nobt2, nspin, nlatt
+subroutine random_ovlp( nsat, sat, maxrep_sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, latt, & 
+                        cell_a, dist_cut, ovlp)
+    integer,intent(in)              :: nsat, nsproj, nat, nobt, nobt2, nspin, nlatt, maxrep_sat
     type(sat_type),intent(in)       :: sat(nsat)                    ! slice-atoms
     type(atom_type),intent(in)      :: at(nat)                      ! atoms
     integer,intent(in)              :: latt(3,nlatt)                ! lattice
-    real(dp),intent(in)             :: cell_a(3,3), cell_b(3,3)     ! primitive cell in real/momentum space
+    real(dp),intent(in)             :: cell_a(3,3)                  ! primitive cell
     real(dp),intent(in)             :: dist_cut                     ! distance cut off for overlap matrix
     complex(dp),intent(out)         :: ovlp(nsproj, nobt2, nlatt)   ! the overlap matrix
     !
     !
     integer     :: RR, aa, ss, xi, LL, ii, ii_, jj, jj_, nn
-    real(dp)    :: bond, rand(2)
+    real(dp)    :: bond
+    ! 
+    ! random number
+    real                 :: rand(2)
     !
     if( nobt2/=nobt*nspin ) then
         write(*,*) 'Error in random_ovlp(): wrong nobt2 !!!'
@@ -41,8 +44,11 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
     endif
     !
     call init_random_seed()
+    print*, '****'
     !
-    ovlp = 0.0_dp
+    print*, nsproj, nobt2, nlatt
+    ovlp= 0.0_dp
+    print*, nsproj, nobt2, nlatt
     !
     do RR=1,nlatt
         do aa=1,nat
@@ -50,7 +56,7 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
             !
             bond = vect_len(  cell_a(:,1)*latt(1,RR) + cell_a(:,2)*latt(2,RR) &
                              +cell_a(:,3)*latt(3,RR) + at(aa)%pos - sat(ss)%pos )
-            if ( bond > dist_cut ) exit
+            if ( bond > dist_cut ) cycle
             !
             do LL=0,Lmax
             do ii=1,at(aa)%nobtL(LL)
@@ -62,7 +68,7 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
                     jj_ = jj - 1 + sat(ss)%idx(xi)
                     call random_number(rand)
                     rand = rand*10.0_dp*exp(-bond/dist_cut)
-                    ovlp(jj_, ii_, RR) = rand(1) + rand(2)*c_im
+                    !ovlp(jj_, ii_, RR) = rand(1) + rand(2)*c_im
                 enddo
                 enddo
                 !
@@ -76,12 +82,12 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
     !
 endsubroutine random_ovlp
 
-subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  & 
+subroutine symm_ovlp( nsat, sat, maxrep_sat, nsproj, satmap, satmapR, rep_sat,  & 
                       nat,  at,  nobt, nobt2, nspin, atmap,  atmapR, rep_at, reps_at, Ut_sat, &
                       nlatt, latt, Rmax, LTidx, cell_a, cell_b, &
                       time_rev, nop, op, &
                       ovlp )
-    integer,intent(in)              :: nsat, nsproj, nat, nobt, nobt2, nspin, nlatt, Rmax, nop
+    integer,intent(in)              :: nsat, nsproj, nat, nobt, nobt2, nspin, nlatt, Rmax, nop, maxrep_sat
     type(sat_type),intent(in)       :: sat(nsat)                ! slice-atoms
     integer,intent(in)              :: satmap(nsat,nop)         ! slice-atom mapping
     integer,intent(in)              :: satmapR(3,nsat,nop)      
@@ -97,16 +103,16 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
     real(dp),intent(in)             :: cell_a(3,3), cell_b(3,3)
     logical,intent(in)              :: time_rev
     type(sym_op)                    :: op(nop)
-    complex(dp),intent(inout)       :: ovlp(nobt2,nsproj,nlatt)
+    complex(dp),intent(inout)       :: ovlp(nsproj,nobt2,nlatt)
     !
-    integer :: aa, ss, aap, ssp, ii, jj, iip, jjp, nn, mm, nnp, mmp, &
-               gg, RR, RRp, LL, ii_, jj_, iip_, jjp_, xi
+    integer :: aa, ss, aap, ssp, ii, jj, iip, jjp, nn, nnp, gg, RR, RRp, &
+               LL, ii_, jj_, iip_, jjp_, xi
     real(kind=dp), dimension(3) :: aapos    ! used for atom mapping
     !
-    ! the symmetrized hr
+    ! symmetrize
     complex(dp)         :: ovlp_sym(nsproj, nobt2, nlatt)
     real(dp)            :: Ut(nspin,nspin)
-    logical             :: badlat(nsproj, nobt2, nlatt)
+    logical             :: badlat(nsat, nat, nlatt)
     !
     ! g0R  
     real(kind=dp), dimension(3) :: g0R_
@@ -136,13 +142,6 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
             !
             if (RRp==0) badlat(ss,aa,RR) = .true.
         enddo
-        !
-        ! TR
-        if (time_rev) then
-            g0R = - latt(:,RR)
-            RRp = LTidx(g0R(1), g0R(2), g0R(3))
-            if (RRp==0) badlat(:,:,RR) = .true.
-        endif
     enddo
     enddo
     enddo
@@ -243,8 +242,9 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
                 do iip=1,sat(ss)%deg(xi)
                     iip_ = sat(ss)%idx(xi) + iip - 1 
                     !
+                    ! TR: <0si|Raj> -->  Ut(j'j)^* Ut(i'i) <0si'|Raj'>^* 
                     ovlp_sym(ii_,jj_,RR) = ovlp_sym(ii_,jj_,RR) &
-                    + conjg(ovlp(iip_,jjp_,RR))*Ut(nnp,nn)*Ut_sat(jjp,jj,xi,ss)
+                    + conjg(ovlp(iip_,jjp_,RR))*Ut(nnp,nn)*Ut_sat(iip,ii,xi,ss)
                     !
                 enddo
                 enddo
@@ -261,7 +261,7 @@ subroutine symm_ovlp( nsat, sat, nsproj, satmap, satmapR, rep_sat,  &
         enddo
         !
     endif
-
+    ! 
 endsubroutine symm_ovlp
 
 endmodule slicewann
