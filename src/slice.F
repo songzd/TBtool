@@ -8,7 +8,7 @@ module slice
 !
 use typcnst,    only: DP, sat_type=>wat_type, irepbs_type, lsize, sym_op, irep_type, &
                       maxdim, Lmax, maxbcp, c_pi
-use my_math,    only: vect_len, unimat
+use my_math,    only: vect_len, unimat, dot_prod
 use pntgrp,     only: TonA, find_ltgrp_r, pgrp_name, euler_angle
 use reprsnt,    only: init_pntgrp_bst, set_pntgrp_irep, dmat_cmplx
 !
@@ -20,7 +20,7 @@ implicit none
 public
 !
 ! kz and bands
-real(dp)                        :: kz_sls(3)        ! kz of the 2D slice
+real(dp)                        :: kz_sls           ! kz of the 2D slice, in direct 
 integer                         :: bstart, bend     ! bands to construct WFs
 !
 ! pseudo-atoms and slice-wannier projector
@@ -31,6 +31,12 @@ integer                         :: nsat              ! number of pseudo-atoms
 type(sat_type)                  :: sat(lsize)        ! pseudo-atoms
 type(irepbs_type)               :: sproj(maxnsproj)  ! sprojnier functions
 real(dp)                        :: dist_cut          ! distance cut off for overlap
+!
+! slice group: the group leaves kz_sls invariant
+integer                         :: nslop            ! number of slice group operations
+type(sym_op)                    :: slop(48)         ! slice group operations
+integer                         :: sl2spg(48)       ! index in space group spgop
+logical                         :: TR_slice         ! whether this slice is TR-invariant
 !
 ! rotation matrix
 integer, allocatable        :: satmap(:,:)          ! satoms mapping, gg*aa is the atmap(aa,gg)
@@ -52,7 +58,7 @@ subroutine read_swan()
     real(dp)            :: sat_pos(3,lsize)
     character(len=30)   :: sproj_list(3,lsize)
     !
-    namelist /SliceWannier/ k_conv, kz_sls, bstart, bend, sat_kind, &
+    namelist /SliceWannier/ kz_sls, bstart, bend, sat_kind, &
                             sat_pos_conv, sat_pos, sproj_list, dist_cut
     !
     integer             :: ii, jj, kk, nn, xi
@@ -64,9 +70,17 @@ subroutine read_swan()
     character(len=30)   :: kdtmp
     type(irep_type)     :: irep(20)
     integer             :: nirep
-    logical             :: findproj
+    logical             :: findproj, kz0p
+    real(dp),parameter  :: caxis = (/ 0.0_dp, 0.0_dp, 1.0_dp /)
     !
-    ! read structure ================================================
+    ! There should be a3 \perp a1,a2 ================================
+    !
+    if ( abs(dot_prod(cell_a(:,3),cell_a(:,1)))>1.0d-4 .or. &
+         abs(dot_prod(cell_a(:,3),cell_a(:,2)))>1.0d-4 ) then
+        write(*,*) 'Error in read_swan(): the lattice is not supported !!!'
+    endif
+    !
+    ! read  =========================================================
     !
     sat_kind  = 0
     sproj_list = ''
@@ -74,6 +88,50 @@ subroutine read_swan()
     open(unit=100, file='job.in', status='old')
     read(100, SliceWannier)
     close(100)
+    !
+    ! slice group ===================================================
+    !
+    kz0p = mod(kz_sls,0.5)<1.0d-8
+    TR_slice = kz0p .and. time_rev
+    !
+    nslop=0
+    do gg=1,nspgop
+        !
+        ! Cn parallel with 001
+        if( abs( abs(dot_prod( spgop(gg)%axis, caxis )) - 1.0_dp )<1.0d-4 .and. &
+            spgop(gg)%det == 1 ) then
+            nslop = nslop + 1
+            slop(nslop) = spgop(gg)
+        endif
+        !
+        ! Vertical mirrors
+        if( abs(dot_prod( spgop(gg)%axis, caxis )) < 1.0d-4 .and. &
+            abs(abs(spgop(gg)%thet) - c_pi) < 1.0d-4 .and. spgop(gg)%det == -1 ) then
+            nslop = nslop + 1
+            slop(nslop) = spgop(gg)
+        endif
+        !
+        ! Inversion
+        if( kz0p .and. abs(spgop(gg)%thet) < 1.0d-4 .and. spgop(gg)%det == -1 ) then
+            nslop = nslop + 1
+            slop(nslop) = spgop(gg)
+        endif
+        !
+        ! Horizontal mirror
+        !
+        ! C2 perpendicular to 001
+        if( kz0p .and. abs(abs(spgop(gg)%thet) - c_pi) < 1.0d-4 .and. &
+            abs(dot_prod( spgop(gg)%axis, caxis )) < 1.0d-4 .and. &
+            spgop(gg)%det == 1 ) then
+            nslop = nslop + 1
+            slop(nslop) = spgop(gg)
+        endif
+
+            
+
+
+    enddo
+    
     !
     ! count pseudo-atoms
     nsat = 0

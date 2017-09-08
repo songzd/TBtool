@@ -278,7 +278,7 @@ endsubroutine symm_ovlp
 !********************************************************************
 subroutine proj_WF(nkp, kmesh, nobt2, wave, bstart, bend, &
                    nwan, nlatt, latt, cell_a, ovlp, Uwan, Sdet)
-    integer,intent(in)      :: nkp, nobt2, nbands, bstart, bend, nwan, nlatt
+    integer,intent(in)      :: nkp, nobt2, bstart, bend, nwan, nlatt
     real(dp),intent(in)     :: kmesh(3,nkp)             ! k-point mesh
     complex(dp),intent(in)  :: wave(nobt2,nobt2,nkp)    ! Periodic part of Bloch wave-function
     integer(dp),intent(in)  :: latt(3,nlatt)            ! lattice
@@ -287,7 +287,7 @@ subroutine proj_WF(nkp, kmesh, nobt2, wave, bstart, bend, &
     complex(dp),intent(out) :: Uwan(nobt2,nwan,nkp)     ! The wannier gaige
     real(dp),intent(out)    :: Sdet(nkp)                ! The determination of S matrix
     !
-    integer         :: kk, ii, jj, nn, aa
+    integer         :: kk, ii, jj, nn, aa, RR
     real(dp)        :: rvec(3), Seig(nwan)
     complex(dp)     :: Smat(nwan,nwan), Wmat(nwan,nwan)
     !
@@ -324,7 +324,7 @@ subroutine proj_WF(nkp, kmesh, nobt2, wave, bstart, bend, &
             do RR=1,nlatt
                 rvec = cell_a(:,1)*latt(1,RR) + cell_a(:,2)*latt(2,RR) + cell_a(:,3)*latt(3,RR)
                 do aa=1,nobt2
-                    Wmat(ii,jj) = Wmat(ii,jj) + ovlp(ii,aa,RR)*wave(aa,nn) &
+                    Wmat(ii,jj) = Wmat(ii,jj) + ovlp(ii,aa,RR)*wave(aa,nn,kk) &
                                               * exp(c_im*dot_prod(rvec,kmesh(:,kk)))
                 enddo
             enddo
@@ -348,7 +348,7 @@ subroutine proj_WF(nkp, kmesh, nobt2, wave, bstart, bend, &
             stop
         endif
         !
-        if (min(Seig)<1.0e-4) then
+        if (minval(Seig)<1.0e-4) then
             write(*,*) 'Error in proj_WF(): Smat singular !!!'
             stop
         endif

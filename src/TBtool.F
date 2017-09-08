@@ -43,7 +43,7 @@ program TBtool
         call read_swan()
         call cstrct_rep_slice()
         !
-        call build_swan()
+        !call build_swan()
     case default
         write(*,'(1X, "Nothing to be done")')
     endselect
