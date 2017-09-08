@@ -50,7 +50,7 @@ subroutine random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, nspin, nlatt, l
             !
             bond = vect_len(  cell_a(:,1)*latt(1,RR) + cell_a(:,2)*latt(2,RR) &
                              +cell_a(:,3)*latt(3,RR) + at(aa)%pos - sat(ss)%pos )
-            if ( bond > dist_cut ) exit
+            if ( bond > dist_cut ) cycle
             !
             do LL=0,Lmax
             do ii=1,at(aa)%nobtL(LL)
