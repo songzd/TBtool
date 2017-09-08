@@ -35,6 +35,7 @@ real(dp)                        :: dist_cut          ! distance cut off for over
 ! slice group: the group leaves kz_sls invariant
 integer                         :: nslop            ! number of slice group operations
 type(sym_op)                    :: slop(48)         ! slice group operations
+character(len=30)               :: slgnm            ! slice group name
 integer                         :: sl2spg(48)       ! index in space group spgop
 logical                         :: TR_slice         ! whether this slice is TR-invariant
 !
@@ -61,7 +62,7 @@ subroutine read_swan()
     namelist /SliceWannier/ kz_sls, bstart, bend, sat_kind, &
                             sat_pos_conv, sat_pos, sproj_list, dist_cut
     !
-    integer             :: ii, jj, kk, nn, xi
+    integer             :: ii, jj, kk, nn, xi, gg
     real(dp)            :: vtmp(3), cax(3), aax(3)
     integer             :: ltmp(3)
     type(sym_op)        :: ltgop(48)   ! Little group operations
@@ -71,7 +72,7 @@ subroutine read_swan()
     type(irep_type)     :: irep(20)
     integer             :: nirep
     logical             :: findproj, kz0p
-    real(dp),parameter  :: caxis = (/ 0.0_dp, 0.0_dp, 1.0_dp /)
+    real(dp)            :: caxis(3)
     !
     ! There should be a3 \perp a1,a2 ================================
     !
@@ -79,6 +80,7 @@ subroutine read_swan()
          abs(dot_prod(cell_a(:,3),cell_a(:,2)))>1.0d-4 ) then
         write(*,*) 'Error in read_swan(): the lattice is not supported !!!'
     endif
+    caxis = cell_a(:,3)/vect_len(cell_a(:,3))
     !
     ! read  =========================================================
     !
@@ -96,42 +98,45 @@ subroutine read_swan()
     !
     nslop=0
     do gg=1,nspgop
-        !
-        ! Cn parallel with 001
-        if( abs( abs(dot_prod( spgop(gg)%axis, caxis )) - 1.0_dp )<1.0d-4 .and. &
-            spgop(gg)%det == 1 ) then
-            nslop = nslop + 1
-            slop(nslop) = spgop(gg)
+        ! Identity & inversion
+        if ( abs(spgop(gg)%thet) < 1.0d-4 ) then
+            if ( spgop(gg)%det == 1 .or. ( spgop(gg)%det ==-1 .and. kz0p ) ) then
+                nslop = nslop + 1
+                slop(nslop) = spgop(gg)
+                sl2spg(nslop) = gg
+            endif
+        ! Axis parallel with 001
+        elseif ( abs( abs( dot_prod(spgop(gg)%axis, caxis) ) - 1.0_dp )<1.0d-4 ) then
+            if ( spgop(gg)%det == 1 .or. ( spgop(gg)%det ==-1 .and. kz0p ) ) then
+                nslop = nslop + 1
+                slop(nslop) = spgop(gg)
+                sl2spg(nslop) = gg
+            endif
+        endif
+        ! Axis perpendicular
+        if ( abs(dot_prod( spgop(gg)%axis, caxis )) < 1.0d-4 .and. &
+             abs(abs(spgop(gg)%thet) - c_pi) < 1.0d-4 ) then
+            if( spgop(gg)%det == -1 .or. (spgop(gg)%det == 1 .and. kz0p )) then
+                nslop = nslop + 1
+                slop(nslop) = spgop(gg)
+                sl2spg(nslop) = gg
+            endif
         endif
         !
-        ! Vertical mirrors
-        if( abs(dot_prod( spgop(gg)%axis, caxis )) < 1.0d-4 .and. &
-            abs(abs(spgop(gg)%thet) - c_pi) < 1.0d-4 .and. spgop(gg)%det == -1 ) then
-            nslop = nslop + 1
-            slop(nslop) = spgop(gg)
-        endif
-        !
-        ! Inversion
-        if( kz0p .and. abs(spgop(gg)%thet) < 1.0d-4 .and. spgop(gg)%det == -1 ) then
-            nslop = nslop + 1
-            slop(nslop) = spgop(gg)
-        endif
-        !
-        ! Horizontal mirror
-        !
-        ! C2 perpendicular to 001
-        if( kz0p .and. abs(abs(spgop(gg)%thet) - c_pi) < 1.0d-4 .and. &
-            abs(dot_prod( spgop(gg)%axis, caxis )) < 1.0d-4 .and. &
-            spgop(gg)%det == 1 ) then
-            nslop = nslop + 1
-            slop(nslop) = spgop(gg)
-        endif
-
-            
-
-
     enddo
-    
+    !
+    call pgrp_name(nslop, slop, slgnm, cax, aax)
+    !
+    write(*,'(1X, "Slice wannier:")')
+    write(*,'(5X, "kz = ", F10.5, " (in cell_b(3))")') kz_sls
+    write(*,'(5X, "Slice point group:", A9)') trim(slgnm)
+    write(*,'(5X, " iop", " det", "    alph", 2X, "axis (in cart)", &
+              15X, "tau (in cart)")')
+    do ii=1, nslop
+58      format(5X,2I4, F8.1, '  (',3F8.4, ')','   (',3F8.4,')')
+        write(*, 58) ii, slop(ii)%det, slop(ii)%thet/c_pi*180, &
+                     slop(ii)%axis, slop(ii)%tau
+    enddo
     !
     ! count pseudo-atoms
     nsat = 0
@@ -163,7 +168,7 @@ subroutine read_swan()
         sat(ii)%pos = sat_pos(:,ii)
         !
         ! find the SSG of sat(ii)%pos
-        call find_ltgrp_r(sat(ii)%pos, nspgop, spgop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
+        call find_ltgrp_r(sat(ii)%pos, nslop, slop, cell_a, cell_b, nltgop, ltgop, ltg2spg)
         call pgrp_name(nltgop, ltgop, sat(ii)%SSG, cax, aax)
         call euler_angle(cax, aax, sat(ii)%alph, sat(ii)%beta, sat(ii)%gamm)
         !
