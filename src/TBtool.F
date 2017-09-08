@@ -3,6 +3,7 @@ program TBtool
     use typcnst,    only: DP, i12
     use tghtbd,     only: get_obt, get_hr, nspin
     use symm,       only: get_sym, cstrct_rep
+    use slice,      only: read_swan, cstrct_rep_slice
     !
     implicit none
     !
@@ -37,7 +38,11 @@ program TBtool
         ! Band irreps
         call band_irreps()
     case('sl')
+        !
         ! slice-wannier
+        call read_swan()
+        call cstrct_rep_slice()
+        !
         call build_swan()
     case default
         write(*,'(1X, "Nothing to be done")')
@@ -193,7 +198,7 @@ subroutine impose_sym_H0()
 !    ! The input should be a symmetrized hamiltonian
 !    h0_dat_(:,:,:)=h0_dat(:,:,:)
 !
-    write(*,'(1X,"Impose symmetry on H0 ... ")' )
+    write(*,'(1X,"Impose symmetry on H0 ... ")', advance='no' )
     !
     call impose_sym(h0_lat_num, nobt, nobt2, nspin, h0_dat, h0_lat, LTmax, h0_LTidx, nspgop, spgop, &
                     time_rev, natom, atom, atmap, atmapR, rep_at, reps_at, &
@@ -415,25 +420,44 @@ subroutine build_swan()
                           nlatt=>h0_lat_num, latt=>h0_lat, LTidx=>h0_LTidx
     use symm,       only: nop=>nspgop, op=>spgop, time_rev, atmap, atmapR, rep_at, reps_at
     use slice,      only: read_swan, cstrct_rep_slice, nsat, sat, maxrep_sat, nsproj, satmap, &
-                          satmapR, rep_sat, Ut_sat, dist_cut
+                          satmapR, rep_sat, Ut_sat, dist_cut, kz_sls
     !
-    use slicewann,  only: random_ovlp, symm_ovlp
+    use wannier,    only: random_ovlp, symm_ovlp
     !
+    integer             :: RR, ii, jj
     complex(dp)         :: ovlp(nsproj,nobt2,nlatt)
-    !
-    ! get slice projector information ===============================
-    !
-    call read_swan()
-    call cstrct_rep_slice()
     !
     ! set random ovlp ===============================================
     !
-    call random_ovlp( nsat, sat, maxrep_sat, nsproj, nat, at, nobt, nobt2, &
+    call random_ovlp( nsat, sat, nsproj, nat, at, nobt, nobt2, &
                       nspin, nlatt, latt, cell_a, dist_cut, ovlp)
     !
-
-
-
+    ! symmetrize ovlp ===============================================
+    !
+    call symm_ovlp( nsat, sat, maxrep_sat, nsproj, satmap, satmapR, rep_sat,  & 
+                    nat,  at,  nobt, nobt2, nspin, atmap,  atmapR, rep_at, reps_at, Ut_sat, &
+                    nlatt, latt, LTmax, LTidx, cell_a, cell_b, &
+                    time_rev, nop, op, ovlp )
+    !
+    ! output the overlap ============================================
+    !
+    open(100,file='out.ovlp_rand',status='replace')
+    do RR=1,nlatt
+        do jj=1,nobt2
+        do ii=1,nsproj
+            if ( abs(ovlp(ii,jj,RR))>1.0d-7 ) then
+                write(100,'(5I5, 2F20.10)')  latt(:,RR), ii, jj, ovlp(ii,jj,RR)
+            endif
+        enddo
+        enddo
+    enddo
+    close(100)
+    !
+    write(*,'(6X, "Symmetrized random overlap matrix written to out.ovlp_rand ")')
+    !
+    ! Projection wannierise =========================================
+    ! 
+    !
 endsubroutine build_swan
 
 endprogram TBtool

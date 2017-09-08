@@ -6,7 +6,7 @@
 !********************************************************************
 module slice
 !
-use typcnst,    only: DP, sat_type, irepbs_type, lsize, sym_op, irep_type, &
+use typcnst,    only: DP, sat_type=>wat_type, irepbs_type, lsize, sym_op, irep_type, &
                       maxdim, Lmax, maxbcp, c_pi
 use my_math,    only: vect_len, unimat
 use pntgrp,     only: TonA, find_ltgrp_r, pgrp_name, euler_angle
