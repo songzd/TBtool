@@ -2,7 +2,7 @@
 
 FC = ifort 
 MPI = ifort
-FLAGS = -mkl -g -warn -check bounds 
+FLAGS = -mkl -g -traceback -warn -check bounds 
 #LIBS = -L/home/soft/intel/mkl/lib/intel64 \
        -lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 

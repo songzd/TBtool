@@ -162,11 +162,11 @@ subroutine impose_sym(hr_lat_num, nobt, nobt2, nspin, hr_dat, hr_lat, Rmax, LTid
         enddo
         !
         ! TR
-        if (time_rev) then
-            g0R = - hr_lat(:,RR)
-            RRp = LTidx(g0R(1), g0R(2), g0R(3))
-            if (RRp==0) badlat(:,:,RR) = .true.
-        endif
+        !if (time_rev) then
+        !    g0R = - hr_lat(:,RR)
+        !    RRp = LTidx(g0R(1), g0R(2), g0R(3))
+        !    if (RRp==0) badlat(:,:,RR) = .true.
+        !endif
         !
     enddo
     enddo
