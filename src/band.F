@@ -12,7 +12,6 @@ integer :: lwork
 complex(kind=DP), allocatable,  dimension(:) :: work
 real(kind=DP), allocatable, dimension(:) :: rwork
 !
-!
 contains
 
 subroutine bndspc_ini(nobt2)

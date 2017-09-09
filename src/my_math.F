@@ -49,6 +49,20 @@ function angle(x,y)
     if (y<0)  angle = -angle
 endfunction
 !
+function inner_prod(x,y,n)
+    integer,intent(in)      :: n
+    complex(dp),intent(in)  :: x(n), y(n)
+    complex(dp)             :: inner_prod
+    !
+    integer ii
+    !
+    inner_prod = 0.0_dp
+    do ii=1,n
+        inner_prod = inner_prod + conjg(x(ii))*y(ii)    
+    enddo
+    !
+endfunction
+!
 ! function othmat(): whether D is an othogonal matrix
 function othmat(D,n)
     integer :: n

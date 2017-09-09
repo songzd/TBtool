@@ -26,7 +26,7 @@
     klist(:,6)  = 0.5  0.0  0.5
 /
 &SliceWannier
-    kz_sls = 0.3
+    kz_sls = 0.0
     bstart=1
     bend  =12
     !
@@ -37,11 +37,13 @@
     sat_pos(:,2) = 0.5  0.5  0
     !
     ! slice-wanniers
-    sproj_list(:,1) = 1  C4v  E12      ! kind, SSG, physical irrep ( s.a. E12 and 1E12+2E12 )
-    sproj_list(:,2) = 1  C4v  E12      !  
-    sproj_list(:,3) = 1  C4v  E32
+    sproj_list(:,1) = 1  D4h  E12u      ! kind, SSG, physical irrep ( s.a. E12 and 1E12+2E12 )
+    sproj_list(:,2) = 1  D4h  E12u      !  
+    sproj_list(:,3) = 1  D4h  E32u
     !
     ! overlap cut-off
+    dist_cut = 0.5
     !
-    dist_cut = 2.0
+    ! kx ky mesh
+    nk1=20, nk2=20
 /
