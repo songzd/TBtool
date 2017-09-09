@@ -40,8 +40,9 @@ namelist /Symmetry/ spgop, tau_conv, time_rev, symtol
 !  Variables to construct representation matrices
 integer, allocatable, dimension(:,:)   :: atmap   ! Atoms mapping, gg*aa is the atmap(aa,gg)
 integer, allocatable, dimension(:,:,:) :: atmapR  !    atom in the atmapR(:,aa,gg) lattice
-real(kind=dp), allocatable, dimension(:,:,:,:,:)  :: rep_at 
-complex(kind=dp), allocatable, dimension(:,:,:,:) :: reps_at
+real(dp), allocatable, dimension(:,:,:,:,:)  :: rep_at 
+complex(dp), allocatable, dimension(:,:,:,:) :: reps_at
+!complex(dp), allocatable, dimension(:,:,:)   :: Ut_at   ! Time reversal matrix
 ! rep_at(:,:,L,aa,gg) is the matrix D_{ap,alphp; a,alph}(gg) in my note, 
 !   where, ap={g_R*a + g_T}
 !
@@ -259,8 +260,23 @@ subroutine cstrct_rep(nspin)
         enddo
     enddo
     !
-    !close(100)
     close(101)
+    !
+    ! TR matrix =====================================================
+    !
+    !allocate(Ut_at(nspin,nspin,natom))
+    !!
+    !if (time_rev) then
+    !    if (nspin==1) then
+    !        do aa=1,natom
+    !            Ut_at(1,1,aa) = 1.0_dp
+    !        enddo
+    !    elseif (nspin==2) then
+    !        do aa=1,natom
+    !        enddo
+    !    endif
+    !endif
+    !
     close(102)
     !
 endsubroutine cstrct_rep

@@ -127,7 +127,7 @@ subroutine symm_ovlp( nwat, wat, maxrep_wat, nsproj, watmap, watmapR, rep_wat, U
     !
     ! symmetrize
     complex(dp)         :: ovlp_sym(nsproj, nobt2, nlatt)
-    real(dp)            :: Ut(nspin,nspin)
+    real(dp)            :: Ut(nspin,nspin), norm
     logical             :: badlat(nwat, nat, nlatt)
     !
     ! g0R  
@@ -164,6 +164,64 @@ subroutine symm_ovlp( nwat, wat, maxrep_wat, nsproj, watmap, watmapR, rep_wat, U
     enddo
     enddo
     enddo
+    !
+    ! Time Reversal =================================================
+    !
+    if (time_rev) then
+    !if (.false. ) then
+        !
+        ovlp_sym = 0.0_dp
+        !
+        if (nspin==2) then
+            Ut(1,:) = (/ 0.0_dp,  -1.0_dp /)
+            Ut(2,:) = (/ 1.0_dp,   0.0_dp /)
+        else
+            Ut(1,1) = 1.0_dp
+        endif
+        !
+        do RR=1,nlatt
+            !
+            !RRp = LTidx(-latt(1,RR),-latt(2,RR),-latt(3,RR)) 
+            !
+            do aa=1,nat
+            do LL=0,Lmax
+            do jj=1,at(aa)%nobtL(LL)
+            do nn=1,nspin
+                jj_ = at(aa)%idx(jj,LL) + (nn-1)*nobt
+            do ss=1,nwat
+            do xi=1,wat(ss)%nirep
+            do ii=1,wat(ss)%deg(xi)
+                ii_ = wat(ss)%idx(xi) + ii - 1
+                !print*, aa, LL, jj, nn, ii_, jj_
+                !
+                if(badlat(ss,aa,RR)) cycle
+                !
+                do nnp=1,nspin
+                    jjp_ = at(aa)%idx(jj,LL) + (nnp-1)*nobt
+                do iip=1,wat(ss)%deg(xi)
+                    iip_ = wat(ss)%idx(xi) + iip - 1 
+                    !
+                    ! TR: <0si|Raj> -->  Ut(j'j)^* Ut(i'i) <0si'|Raj'>^* 
+                    ovlp_sym(ii_,jj_,RR) = ovlp_sym(ii_,jj_,RR) &
+                    + conjg(ovlp(iip_,jjp_,RR))*Ut(nnp,nn)*Ut_wat(iip,ii,xi,ss)
+                    !
+                enddo
+                enddo
+                !
+            enddo
+            enddo
+            enddo
+            !
+            enddo
+            enddo
+            enddo
+            enddo
+            !
+        enddo
+        !
+    endif
+    !
+    ovlp = 0.5*(ovlp + ovlp_sym)
     !
     ! Point group ===================================================
     !
@@ -237,64 +295,24 @@ subroutine symm_ovlp( nwat, wat, maxrep_wat, nsproj, watmap, watmapR, rep_wat, U
     !print*, ovlp_sym(1,2,LTidx(0,0,0))
     ovlp = ovlp_sym/nop
     !
-    ! Time Reversal =================================================
+    ! normalization ===========================================================
     !
-    !if (time_rev) then
-    if (.false. ) then
+    do jj=1,nsproj
         !
-        ovlp_sym = 0.0_dp
-        !
-        if (nspin==2) then
-            Ut(1,:) = (/ 0.0_dp,  -1.0_dp /)
-            Ut(2,:) = (/ 1.0_dp,   0.0_dp /)
-        else
-            Ut(1,1) = 1.0_dp
-        endif
-        !
+        norm = 0.0_dp
         do RR=1,nlatt
+        do ii=1,nobt2
             !
-            !RRp = LTidx(-latt(1,RR),-latt(2,RR),-latt(3,RR)) 
-            !
-            do aa=1,nat
-            do LL=0,Lmax
-            do jj=1,at(aa)%nobtL(LL)
-            do nn=1,nspin
-                jj_ = at(aa)%idx(jj,LL) + (nn-1)*nobt
-            do ss=1,nwat
-            do xi=1,wat(ss)%nirep
-            do ii=1,wat(ss)%deg(xi)
-                ii_ = wat(ss)%idx(xi) + ii - 1
-                print*, aa, LL, jj, nn, ii_, jj_
-                !
-                if(badlat(ss,aa,RR)) cycle
-                !
-                do nnp=1,nspin
-                    jjp_ = at(aa)%idx(jj,LL) + (nnp-1)*nobt
-                do iip=1,wat(ss)%deg(xi)
-                    iip_ = wat(ss)%idx(xi) + iip - 1 
-                    !
-                    ! TR: <0si|Raj> -->  Ut(j'j)^* Ut(i'i) <0si'|Raj'>^* 
-                    ovlp_sym(ii_,jj_,RR) = ovlp_sym(ii_,jj_,RR) &
-                    + conjg(ovlp(iip_,jjp_,RR))*Ut(nnp,nn)*Ut_wat(iip,ii,xi,ss)
-                    !
-                enddo
-                enddo
-                !
-            enddo
-            enddo
-            enddo
-            !
-            enddo
-            enddo
-            enddo
-            enddo
+            norm = norm + conjg(ovlp(jj, ii, RR))*ovlp(jj, ii, RR)
             !
         enddo
+        enddo
         !
-    endif
-    !
-    ovlp = 0.5*(ovlp + ovlp_sym)
-    ! 
+        ! normalize
+        ovlp(jj,:,:) = ovlp(jj,:,:)/sqrt(norm)
+        !
+    enddo
+    
 endsubroutine symm_ovlp
 
 !**** proj_wann() ***************************************************
@@ -381,10 +399,10 @@ subroutine proj_WF(kp, nobt2, wave, bstart, bend, &
         stop
     endif
     !
-    if (minval(Seig)<1.0e-4) then
-        write(*,*) 'Error in proj_WF(): Smat singular !!!'
-        stop
-    endif
+    !if (minval(Seig)<1.0e-4) then
+    !    write(*,*) 'Error in proj_WF(): Smat singular !!!'
+    !    stop
+    !endif
     !
     ! Det(S)
     Sdet = 1.0_dp

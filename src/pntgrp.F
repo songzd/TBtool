@@ -718,7 +718,8 @@ endsubroutine find_ltgrp_k
             SFNAME=GNAME(PGIND)
             RETURN
          END IF
-         IF (NC4==1) THEN
+         !IF (NC4==1) THEN  ! vasp
+         IF (NC4==2) THEN   ! songzd
 ! Contains fourfold rotation --> C_4 (PGIND=14):
             PGIND=14
             SFNAME=GNAME(PGIND)

@@ -37,7 +37,7 @@
     time_rev = .true.
     tau_conv='direct'
     spgop(1)%str = 'E'          spgop(1)%tau= 0.0 0.0 0.0
-    spgop(2)%str = 'I'          spgop(2)%tau= 0.0 0.0 0.0
-    spgop(3)%str = 'C4z'        spgop(3)%tau= 0.0 0.0 0.0
-    spgop(4)%str = 'C2y'        spgop(4)%tau= 0.0 0.0 0.0
+    spgop(2)%str = 'C4z'        spgop(3)%tau= 0.0 0.0 0.0
+    spgop(3)%str = 'I'          spgop(2)%tau= 0.0 0.0 0.0
+    !spgop(4)%str = 'C2y'        spgop(4)%tau= 0.0 0.0 0.0
 /
