@@ -262,11 +262,18 @@ subroutine get_hr
             h0_lat_tmp(:,ll) = lat_tmp
             h0_LTidx(lat_tmp(1),lat_tmp(2),lat_tmp(3))=ll
             h0_dat_tmp(ii,jj,ll) = cmplx(rr,ss,kind=dp)
+            if ( soc_type(1:1)=='m' ) then
+                h0_dat_tmp(ii+nobt,jj+nobt,ll) = cmplx(rr,ss,kind=dp)
+            endif
             !
         else
             !
             h0_dat_tmp(ii,jj, h0_LTidx(lat_tmp(1),lat_tmp(2),lat_tmp(3)) ) &
                 = cmplx(rr,ss,kind=dp)
+            if ( soc_type(1:1)=='m' ) then
+                h0_dat_tmp(ii+nobt,jj+nobt, h0_LTidx(lat_tmp(1),lat_tmp(2),lat_tmp(3)) ) &
+                    = cmplx(rr,ss,kind=dp)
+            endif
             !
         endif
         !   
