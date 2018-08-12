@@ -42,7 +42,7 @@
     sproj_list(:,3) = 1  C4h  1E32u+2E32u
     !
     ! overlap cut-off
-    dist_cut = 0.4
+    dist_cut = 2
     !
     ! kx ky mesh
     nk1=40, nk2=40
